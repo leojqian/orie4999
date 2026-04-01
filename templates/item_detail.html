@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% block title %}{{ item.name }}{% endblock %}
+
+{% block content %}
+<div class="mt-4 mb-3 no-print">
+  <a href="/items" class="text-decoration-none text-muted small">
+    <i class="bi bi-arrow-left me-1"></i>Back to Inventory
+  </a>
+</div>
+
+<div class="row g-4">
+  <!-- Left: item info -->
+  <div class="col-12 col-lg-4">
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between mb-2">
+          <h5 class="fw-bold mb-0">{{ item.name }}</h5>
+          <div class="no-print">
+            <a href="/items/{{ item.id }}/edit" class="btn btn-sm btn-outline-primary me-1" title="Edit">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a href="/items/{{ item.id }}/qr" target="_blank" class="btn btn-sm btn-outline-dark" title="Print QR">
+              <i class="bi bi-qr-code"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- Quantity badge -->
+        <div class="mb-3">
+          {% if item.low_stock_threshold > 0 and item.quantity <= item.low_stock_threshold %}
+            <span class="badge bg-danger fs-5 px-3 py-2">{{ item.quantity }} {{ item.unit }}</span>
+            <span class="badge bg-warning text-dark ms-1">Low Stock</span>
+          {% elif item.quantity == 0 %}
+            <span class="badge bg-secondary fs-5 px-3 py-2">0 {{ item.unit }}</span>
+          {% else %}
+            <span class="badge bg-success fs-5 px-3 py-2">{{ item.quantity }} {{ item.unit }}</span>
+          {% endif %}
+        </div>
+
+        <dl class="row mb-0 small">
+          <dt class="col-5 text-muted">Category</dt>
+          <dd class="col-7">{{ item.category_name or '—' }}</dd>
+          <dt class="col-5 text-muted">Location</dt>
+          <dd class="col-7">{{ item.location_name or '—' }}</dd>
+          <dt class="col-5 text-muted">Unit</dt>
+          <dd class="col-7">{{ item.unit }}</dd>
+          <dt class="col-5 text-muted">Low-stock at</dt>
+          <dd class="col-7">{{ item.low_stock_threshold or '—' }}</dd>
+          {% if item.supplier %}
+          <dt class="col-5 text-muted">Supplier</dt>
+          <dd class="col-7">{{ item.supplier }}</dd>
+          {% endif %}
+          {% if item.sku %}
+          <dt class="col-5 text-muted">SKU</dt>
+          <dd class="col-7 font-monospace">{{ item.sku }}</dd>
+          {% endif %}
+          {% if item.notes %}
+          <dt class="col-5 text-muted">Notes</dt>
+          <dd class="col-7">{{ item.notes }}</dd>
+          {% endif %}
+          <dt class="col-5 text-muted">Added</dt>
+          <dd class="col-7">{{ item.created_at[:10] }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    <!-- QR code preview -->
+    <div class="card mb-3 no-print">
+      <div class="card-body text-center py-3">
+        <img src="/items/{{ item.id }}/qr" alt="QR Code" class="img-fluid" style="max-width:160px">
+        <div class="mt-2">
+          <a href="/items/{{ item.id }}/qr" target="_blank" class="btn btn-sm btn-outline-dark">
+            <i class="bi bi-printer me-1"></i>Print QR Label
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete -->
+    <div class="card border-danger no-print">
+      <div class="card-body">
+        <h6 class="text-danger">Danger Zone</h6>
+        <form method="post" action="/items/{{ item.id }}/delete"
+              onsubmit="return confirm('Delete \'{{ item.name }}\'? This cannot be undone.');">
+          <button class="btn btn-sm btn-outline-danger w-100">
+            <i class="bi bi-trash me-1"></i>Delete Item
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: actions + history -->
+  <div class="col-12 col-lg-8">
+
+    <!-- Action tabs -->
+    <div class="card mb-4 no-print">
+      <div class="card-header bg-white">
+        <ul class="nav nav-tabs card-header-tabs" id="actionTabs">
+          <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-checkout">
+              <i class="bi bi-box-arrow-up me-1 text-warning"></i>Check Out
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-checkin">
+              <i class="bi bi-box-arrow-in-down me-1 text-success"></i>Check In
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-restock">
+              <i class="bi bi-plus-circle me-1 text-primary"></i>Restock
+            </button>
+          </li>
+        </ul>
+      </div>
+      <div class="card-body tab-content pt-3">
+
+        <!-- Checkout -->
+        <div class="tab-pane fade show active" id="tab-checkout">
+          <form method="post" action="/items/{{ item.id }}/checkout">
+            <div class="row g-2">
+              <div class="col-6 col-md-3">
+                <label class="form-label small">Quantity</label>
+                <input type="number" name="quantity" class="form-control" value="1" min="0.01"
+                       step="any" max="{{ item.quantity }}" required>
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label small">Your Name <span class="text-danger">*</span></label>
+                <input type="text" name="user_name" class="form-control" placeholder="e.g. J. Kim" required>
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label small">Project</label>
+                <input type="text" name="project" class="form-control" placeholder="Project name">
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label small">Notes</label>
+                <input type="text" name="notes" class="form-control" placeholder="Optional">
+              </div>
+            </div>
+            <button class="btn btn-warning mt-3">
+              <i class="bi bi-box-arrow-up me-1"></i>Check Out
+            </button>
+          </form>
+        </div>
+
+        <!-- Checkin -->
+        <div class="tab-pane fade" id="tab-checkin">
+          <form method="post" action="/items/{{ item.id }}/checkin">
+            <div class="row g-2">
+              <div class="col-6 col-md-3">
+                <label class="form-label small">Quantity</label>
+                <input type="number" name="quantity" class="form-control" value="1" min="0.01" step="any" required>
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label small">Your Name <span class="text-danger">*</span></label>
+                <input type="text" name="user_name" class="form-control" placeholder="e.g. A. Ritz-Jack" required>
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label small">Project</label>
+                <input type="text" name="project" class="form-control" placeholder="Project name">
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label small">Notes</label>
+                <input type="text" name="notes" class="form-control" placeholder="Optional">
+              </div>
+            </div>
+            <button class="btn btn-success mt-3">
+              <i class="bi bi-box-arrow-in-down me-1"></i>Check In
+            </button>
+          </form>
+        </div>
+
+        <!-- Restock -->
+        <div class="tab-pane fade" id="tab-restock">
+          <form method="post" action="/items/{{ item.id }}/restock">
+            <div class="row g-2">
+              <div class="col-6 col-md-3">
+                <label class="form-label small">Quantity Added</label>
+                <input type="number" name="quantity" class="form-control" value="1" min="0.01" step="any" required>
+              </div>
+              <div class="col-6 col-md-4">
+                <label class="form-label small">Your Name <span class="text-danger">*</span></label>
+                <input type="text" name="user_name" class="form-control" placeholder="e.g. L. Qian" required>
+              </div>
+              <div class="col-12 col-md-5">
+                <label class="form-label small">Notes</label>
+                <input type="text" name="notes" class="form-control" placeholder="e.g. Order #12345">
+              </div>
+            </div>
+            <button class="btn btn-primary mt-3">
+              <i class="bi bi-plus-circle me-1"></i>Restock
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transaction history -->
+    <div class="card">
+      <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+        <span class="fw-semibold"><i class="bi bi-clock-history me-2 text-secondary"></i>Transaction History</span>
+        <small class="text-muted">Last 30 entries</small>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Time</th>
+              <th>Action</th>
+              <th>Qty Change</th>
+              <th>Balance</th>
+              <th>User</th>
+              <th>Project</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if history %}
+              {% for t in history %}
+              <tr>
+                <td><small class="text-muted">{{ t.timestamp[:16] }}</small></td>
+                <td><span class="badge badge-action-{{ t.action }}">{{ t.action }}</span></td>
+                <td>
+                  {% if t.quantity_change > 0 %}
+                    <span class="text-success">+{{ t.quantity_change }}</span>
+                  {% else %}
+                    <span class="text-danger">{{ t.quantity_change }}</span>
+                  {% endif %}
+                </td>
+                <td>{{ t.quantity_after }} {{ item.unit }}</td>
+                <td><small>{{ t.user_name }}</small></td>
+                <td><small class="text-muted">{{ t.project or '—' }}</small></td>
+                <td><small class="text-muted">{{ t.notes or '—' }}</small></td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="7" class="text-center text-muted py-4">No transactions yet.</td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

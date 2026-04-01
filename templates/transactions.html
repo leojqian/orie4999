@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Transaction Log{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mt-4 mb-3">
+  <h4 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2 text-primary"></i>Transaction Log</h4>
+</div>
+
+<!-- Filter bar -->
+<div class="card mb-3 no-print">
+  <div class="card-body py-2">
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+      <span class="text-muted small me-1">Filter by action:</span>
+      {% for action in ['', 'checkout', 'checkin', 'restock', 'add'] %}
+      <a href="/transactions{% if action %}?action={{ action }}{% endif %}"
+         class="btn btn-sm {% if selected_action == action %}btn-dark{% else %}btn-outline-secondary{% endif %}">
+        {% if action %}{{ action }}{% else %}All{% endif %}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="text-muted small mb-2">Showing {{ transactions|length }} most recent entries</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Timestamp</th>
+          <th>Action</th>
+          <th>Item</th>
+          <th>Qty Change</th>
+          <th>Balance After</th>
+          <th>User</th>
+          <th>Project</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if transactions %}
+          {% for t in transactions %}
+          <tr>
+            <td><small class="text-muted font-monospace">{{ t.timestamp[:16] }}</small></td>
+            <td><span class="badge badge-action-{{ t.action }}">{{ t.action }}</span></td>
+            <td>
+              <a href="/items/{{ t.item_id }}" class="text-decoration-none fw-semibold">{{ t.item_name }}</a>
+            </td>
+            <td>
+              {% if t.quantity_change > 0 %}
+                <span class="text-success fw-semibold">+{{ t.quantity_change }}</span>
+              {% else %}
+                <span class="text-danger fw-semibold">{{ t.quantity_change }}</span>
+              {% endif %}
+            </td>
+            <td>{{ t.quantity_after }}</td>
+            <td><small>{{ t.user_name }}</small></td>
+            <td><small class="text-muted">{{ t.project or '—' }}</small></td>
+            <td><small class="text-muted">{{ t.notes or '—' }}</small></td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="8" class="text-center text-muted py-5">
+              <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+              No transactions recorded yet.
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
