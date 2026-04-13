@@ -250,8 +250,17 @@ def item_detail(item_id):
         SELECT * FROM transactions WHERE item_id = ?
         ORDER BY timestamp DESC LIMIT 30
     """, (item_id,)).fetchall()
+
+    kit_usage = db.execute("""
+        SELECT k.id, k.name FROM kit_components kc
+        JOIN kits k ON k.id = kc.kit_id
+        WHERE kc.item_id = ?
+        ORDER BY k.name
+    """, (item_id,)).fetchall()
+
     db.close()
-    return render_template("item_detail.html", item=item, history=history)
+    return render_template("item_detail.html", item=item, history=history,
+                           kit_usage=kit_usage)
 
 
 # ---------------------------------------------------------------------------
@@ -303,6 +312,23 @@ def delete_item(item_id):
     db = get_db()
     item = db.execute("SELECT name FROM items WHERE id = ?", (item_id,)).fetchone()
     if item:
+        force = request.form.get("force") == "1"
+        if not force:
+            kit_usage = db.execute("""
+                SELECT k.name FROM kit_components kc
+                JOIN kits k ON k.id = kc.kit_id
+                WHERE kc.item_id = ?
+            """, (item_id,)).fetchall()
+            if kit_usage:
+                kit_names = ", ".join(r["name"] for r in kit_usage)
+                flash(
+                    f'"{item["name"]}" is a component in: {kit_names}. '
+                    f'Deleting it will remove it from those kits. Confirm below.',
+                    "warning"
+                )
+                db.close()
+                return redirect(url_for("item_detail", item_id=item_id))
+
         db.execute("DELETE FROM transactions WHERE item_id = ?", (item_id,))
         db.execute("DELETE FROM kit_components WHERE item_id = ?", (item_id,))
         db.execute("DELETE FROM items WHERE id = ?", (item_id,))
@@ -485,6 +511,8 @@ def delete_location(loc_id):
     loc = db.execute("SELECT name FROM locations WHERE id = ?", (loc_id,)).fetchone()
     if loc:
         db.execute("UPDATE items SET location_id=NULL WHERE location_id=?", (loc_id,))
+        db.execute("UPDATE kits SET location_id=NULL WHERE location_id=?", (loc_id,))
+        db.execute("UPDATE locations SET parent_id=NULL WHERE parent_id=?", (loc_id,))
         db.execute("DELETE FROM locations WHERE id=?", (loc_id,))
         db.commit()
         flash(f'Location "{loc["name"]}" deleted.', "success")

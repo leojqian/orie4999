@@ -46,13 +46,17 @@
         {% if locations %}
           {% for loc in locations %}
           {% if not loc.parent_id %}
+          {% set child_count = locations | selectattr('parent_id', 'equalto', loc.id) | list | length %}
           <li class="list-group-item">
             <div style="display:flex;align-items:center;gap:8px">
               <i class="bi bi-geo-fill" style="color:var(--blue)"></i>
               <span style="font-weight:600">{{ loc.name }}</span>
+              {% if child_count > 0 %}
+                <span style="font-size:11px;background:var(--amber-light);color:var(--amber);padding:2px 7px;border-radius:10px;font-weight:500">{{ child_count }} sub-location{{ 's' if child_count != 1 }}</span>
+              {% endif %}
             </div>
             <form method="post" action="/locations/{{ loc.id }}/delete"
-                  onsubmit="return confirm('Delete \'{{ loc.name }}\'?');">
+                  onsubmit="return confirm('{% if child_count > 0 %}\'{{ loc.name }}\' has {{ child_count }} sub-location(s) that will become top-level. {% endif %}Delete \'{{ loc.name }}\'?');">
               <button class="btn btn-ghost btn-sm" style="color:var(--red)"><i class="bi bi-trash"></i></button>
             </form>
           </li>
