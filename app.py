@@ -133,6 +133,7 @@ def dashboard():
     stats = {
         "total_items":      db.execute("SELECT COUNT(*) FROM items").fetchone()[0],
         "total_categories": db.execute("SELECT COUNT(*) FROM categories").fetchone()[0],
+        "total_kits":       db.execute("SELECT COUNT(*) FROM kits").fetchone()[0],
         "low_stock_count":  len(low_stock),
         "txn_today":        db.execute(
             "SELECT COUNT(*) FROM transactions WHERE DATE(timestamp) = DATE('now')"
@@ -303,6 +304,7 @@ def delete_item(item_id):
     item = db.execute("SELECT name FROM items WHERE id = ?", (item_id,)).fetchone()
     if item:
         db.execute("DELETE FROM transactions WHERE item_id = ?", (item_id,))
+        db.execute("DELETE FROM kit_components WHERE item_id = ?", (item_id,))
         db.execute("DELETE FROM items WHERE id = ?", (item_id,))
         db.commit()
         flash(f'Item "{item["name"]}" deleted.', "success")

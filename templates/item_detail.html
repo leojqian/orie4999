@@ -47,15 +47,15 @@
         <table style="width:100%;border-collapse:collapse;font-size:13.5px">
           {% macro row(label, val) %}
           <tr>
-            <td style="padding:10px 18px;color:var(--muted);font-weight:500;width:42%;border-bottom:1px solid #f0f2f4">{{ label }}</td>
-            <td style="padding:10px 18px;border-bottom:1px solid #f0f2f4">{{ val }}</td>
+            <td style="padding:10px 18px;color:var(--muted);font-weight:500;width:42%;border-bottom:1px solid var(--border-subtle)">{{ label }}</td>
+            <td style="padding:10px 18px;border-bottom:1px solid var(--border-subtle)">{{ val }}</td>
           </tr>
           {% endmacro %}
           {{ row("Category", item.category_name or "—") }}
           {{ row("Location",  item.location_name  or "—") }}
           {{ row("Unit",      item.unit) }}
           {% if item.supplier %}{{ row("Supplier", item.supplier) }}{% endif %}
-          {% if item.sku %}<tr><td style="padding:10px 18px;color:var(--muted);font-weight:500;width:42%;border-bottom:1px solid #f0f2f4">SKU</td><td style="padding:10px 18px;border-bottom:1px solid #f0f2f4"><code>{{ item.sku }}</code></td></tr>{% endif %}
+          {% if item.sku %}<tr><td style="padding:10px 18px;color:var(--muted);font-weight:500;width:42%;border-bottom:1px solid var(--border-subtle)">SKU</td><td style="padding:10px 18px;border-bottom:1px solid var(--border-subtle)"><code>{{ item.sku }}</code></td></tr>{% endif %}
           {% if item.notes %}{{ row("Notes", item.notes) }}{% endif %}
           {{ row("Added", item.created_at[:10]) }}
         </table>
@@ -101,7 +101,7 @@
       </div>
       <div class="tab-content card-bd">
 
-        <div class="tab-pane show" id="tab-co">
+        <div class="tab-pane active" id="tab-co">
           <p class="text-muted" style="font-size:13px;margin-bottom:14px">Remove stock that is leaving the lab for use in a project or experiment.</p>
           <form method="post" action="/items/{{ item.id }}/checkout">
             <div class="row g-2">

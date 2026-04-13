@@ -17,7 +17,7 @@
                 {% if selected_action == action %}
                   background:var(--blue);border-color:var(--blue);color:white;
                 {% else %}
-                  background:white;border-color:var(--border);color:var(--muted);
+                  background:var(--surface);border-color:var(--border);color:var(--muted);
                 {% endif %}">
         {% if action %}
           <span class="badge badge-action-{{ action }}" style="margin-right:4px;font-size:11px">{{ action }}</span>

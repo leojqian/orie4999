@@ -56,6 +56,10 @@
               <div style="display:flex;gap:4px">
                 <a href="/kits/{{ kit.id }}" class="btn btn-ghost btn-sm" title="View"><i class="bi bi-eye"></i></a>
                 <a href="/kits/{{ kit.id }}/edit" class="btn btn-ghost btn-sm" title="Edit"><i class="bi bi-pencil"></i></a>
+                <form method="post" action="/kits/{{ kit.id }}/delete" style="display:inline"
+                      onsubmit="return confirm('Delete \'{{ kit.name }}\'? This cannot be undone.');">
+                  <button type="submit" class="btn btn-ghost btn-sm" title="Delete" style="color:var(--red)"><i class="bi bi-trash"></i></button>
+                </form>
               </div>
             </td>
           </tr>

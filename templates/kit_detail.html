@@ -48,9 +48,9 @@
       <div class="card-hd">Details</div>
       <div class="card-bd" style="padding:0">
         <table style="width:100%;border-collapse:collapse;font-size:13.5px">
-          {% if kit.location_name %}<tr><td style="padding:10px 18px;color:var(--muted);font-weight:500;width:44%;border-bottom:1px solid #f0f2f4">Location</td><td style="padding:10px 18px;border-bottom:1px solid #f0f2f4">{{ kit.location_name }}</td></tr>{% endif %}
-          {% if kit.supplier %}<tr><td style="padding:10px 18px;color:var(--muted);font-weight:500;border-bottom:1px solid #f0f2f4">Supplier</td><td style="padding:10px 18px;border-bottom:1px solid #f0f2f4">{{ kit.supplier }}</td></tr>{% endif %}
-          {% if kit.sku %}<tr><td style="padding:10px 18px;color:var(--muted);font-weight:500;border-bottom:1px solid #f0f2f4">SKU</td><td style="padding:10px 18px;border-bottom:1px solid #f0f2f4"><code>{{ kit.sku }}</code></td></tr>{% endif %}
+          {% if kit.location_name %}<tr><td style="padding:10px 18px;color:var(--muted);font-weight:500;width:44%;border-bottom:1px solid var(--border-subtle)">Location</td><td style="padding:10px 18px;border-bottom:1px solid var(--border-subtle)">{{ kit.location_name }}</td></tr>{% endif %}
+          {% if kit.supplier %}<tr><td style="padding:10px 18px;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border-subtle)">Supplier</td><td style="padding:10px 18px;border-bottom:1px solid var(--border-subtle)">{{ kit.supplier }}</td></tr>{% endif %}
+          {% if kit.sku %}<tr><td style="padding:10px 18px;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border-subtle)">SKU</td><td style="padding:10px 18px;border-bottom:1px solid var(--border-subtle)"><code>{{ kit.sku }}</code></td></tr>{% endif %}
           {% if kit.notes %}<tr><td style="padding:10px 18px;color:var(--muted);font-weight:500">Notes</td><td style="padding:10px 18px">{{ kit.notes }}</td></tr>{% endif %}
         </table>
       </div>
@@ -114,7 +114,7 @@
       <div class="tab-content card-bd">
 
         {% if kit.kit_type == 'custom' %}
-        <div class="tab-pane show" id="tab-build">
+        <div class="tab-pane active" id="tab-build">
           <p class="text-muted" style="font-size:13px;margin-bottom:14px">
             Assemble kits in-lab. Each kit built deducts the listed component quantities from inventory stock.
           </p>
@@ -149,7 +149,7 @@
         {% endif %}
 
         {% if kit.kit_type == 'vendor' %}
-        <div class="tab-pane show" id="tab-receive">
+        <div class="tab-pane active" id="tab-receive">
           <p class="text-muted" style="font-size:13px;margin-bottom:14px">
             Record incoming vendor kits. These arrive pre-assembled — no component deduction.
           </p>

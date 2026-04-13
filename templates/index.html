@@ -2,165 +2,138 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<div class="pg-header">
+<div class="pg-header" style="margin-bottom:20px">
   <h1 class="pg-title">Dashboard</h1>
-  <a href="/items/new" class="btn btn-primary no-print"><i class="bi bi-plus-lg"></i>Add Item</a>
+  <span class="text-muted" style="font-size:13px">{{ stats.txn_today }} transaction{{ 's' if stats.txn_today != 1 }} today</span>
 </div>
 
-<!-- Stats row -->
-<div class="row g-3 mb-4">
+<!-- Stat row — compact, 4 across -->
+<div class="row g-2 mb-3">
   <div class="col-6 col-md-3">
-    <div class="stat-card">
-      <div>
-        <div class="stat-val" style="color:var(--blue)">{{ stats.total_items }}</div>
-        <div class="stat-lbl">Total Items</div>
+    <a href="/items" style="text-decoration:none">
+      <div class="stat-card" style="padding:14px 16px">
+        <div>
+          <div class="stat-val" style="color:var(--blue);font-size:24px">{{ stats.total_items }}</div>
+          <div class="stat-lbl">Items</div>
+        </div>
+        <div class="stat-ico" style="background:var(--blue-light);color:var(--blue);width:34px;height:34px;font-size:16px">
+          <i class="bi bi-box-seam-fill"></i>
+        </div>
       </div>
-      <div class="stat-ico" style="background:var(--blue-light);color:var(--blue)">
-        <i class="bi bi-box-seam"></i>
-      </div>
-    </div>
-  </div>
-  <div class="col-6 col-md-3">
-    <div class="stat-card">
-      <div>
-        <div class="stat-val" style="color:var(--green)">{{ stats.total_categories }}</div>
-        <div class="stat-lbl">Categories</div>
-      </div>
-      <div class="stat-ico" style="background:var(--green-light);color:var(--green)">
-        <i class="bi bi-tags"></i>
-      </div>
-    </div>
-  </div>
-  <div class="col-6 col-md-3">
-    <div class="stat-card">
-      <div>
-        <div class="stat-val" style="color:{% if stats.low_stock_count > 0 %}var(--red){% else %}var(--muted){% endif %}">{{ stats.low_stock_count }}</div>
-        <div class="stat-lbl">Low Stock Alerts</div>
-      </div>
-      <div class="stat-ico" style="background:var(--red-light);color:var(--red)">
-        <i class="bi bi-exclamation-triangle"></i>
-      </div>
-    </div>
-  </div>
-  <div class="col-6 col-md-3">
-    <div class="stat-card">
-      <div>
-        <div class="stat-val" style="color:var(--amber)">{{ stats.txn_today }}</div>
-        <div class="stat-lbl">Transactions Today</div>
-      </div>
-      <div class="stat-ico" style="background:var(--amber-light);color:var(--amber)">
-        <i class="bi bi-arrow-left-right"></i>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Quick actions -->
-<div class="section-label no-print">Quick Actions</div>
-<div class="row g-3 mb-4 no-print">
-  <div class="col-6 col-md-3">
-    <a href="/items/new" class="qa-tile">
-      <div class="qa-ico" style="background:var(--blue-light);color:var(--blue)"><i class="bi bi-plus-square"></i></div>
-      <div class="qa-title">Add Item</div>
-      <div class="qa-desc">Register new inventory</div>
     </a>
   </div>
   <div class="col-6 col-md-3">
-    <a href="/kits/new" class="qa-tile">
-      <div class="qa-ico" style="background:var(--teal-light);color:var(--teal)"><i class="bi bi-collection"></i></div>
-      <div class="qa-title">Define Kit</div>
-      <div class="qa-desc">Create a new kit type</div>
+    <a href="/kits" style="text-decoration:none">
+      <div class="stat-card" style="padding:14px 16px">
+        <div>
+          <div class="stat-val" style="color:var(--teal);font-size:24px">{{ stats.total_kits }}</div>
+          <div class="stat-lbl">Kits</div>
+        </div>
+        <div class="stat-ico" style="background:var(--teal-light);color:var(--teal);width:34px;height:34px;font-size:16px">
+          <i class="bi bi-collection-fill"></i>
+        </div>
+      </div>
     </a>
   </div>
   <div class="col-6 col-md-3">
-    <a href="/items?low_stock=1" class="qa-tile">
-      <div class="qa-ico" style="background:var(--red-light);color:var(--red)"><i class="bi bi-exclamation-triangle"></i></div>
-      <div class="qa-title">Low Stock</div>
-      <div class="qa-desc">{{ stats.low_stock_count }} item{{ 's' if stats.low_stock_count != 1 }} need attention</div>
+    <a href="/items" style="text-decoration:none">
+      <div class="stat-card" style="padding:14px 16px">
+        <div>
+          <div class="stat-val" style="color:{% if stats.low_stock_count > 0 %}var(--red){% else %}var(--muted){% endif %};font-size:24px">{{ stats.low_stock_count }}</div>
+          <div class="stat-lbl">Low Stock</div>
+        </div>
+        <div class="stat-ico" style="background:var(--red-light);color:var(--red);width:34px;height:34px;font-size:16px">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+      </div>
     </a>
   </div>
   <div class="col-6 col-md-3">
-    <a href="/transactions" class="qa-tile">
-      <div class="qa-ico" style="background:var(--purple-light);color:var(--purple)"><i class="bi bi-clock-history"></i></div>
-      <div class="qa-title">Audit Log</div>
-      <div class="qa-desc">View all transactions</div>
+    <a href="/transactions" style="text-decoration:none">
+      <div class="stat-card" style="padding:14px 16px">
+        <div>
+          <div class="stat-val" style="color:var(--amber);font-size:24px">{{ stats.total_categories }}</div>
+          <div class="stat-lbl">Categories</div>
+        </div>
+        <div class="stat-ico" style="background:var(--amber-light);color:var(--amber);width:34px;height:34px;font-size:16px">
+          <i class="bi bi-tags-fill"></i>
+        </div>
+      </div>
     </a>
   </div>
 </div>
 
-<!-- Low stock + recent activity -->
+<!-- Main 2-column layout: activity (wider) + low stock (narrower) -->
 <div class="row g-3">
-  <div class="col-12 col-lg-6">
-    <div class="card">
-      <div class="card-hd">
-        <span><i class="bi bi-exclamation-triangle-fill me-2" style="color:var(--red)"></i>Low Stock Alerts</span>
-        <span class="badge badge-red">{{ low_stock|length }}</span>
-      </div>
-      {% if low_stock %}
-      <div class="table-responsive">
-        <table class="table mb-0">
-          <thead>
-            <tr>
-              <th>Item</th>
-              <th>Stock</th>
-              <th>Threshold</th>
-              <th>Location</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for item in low_stock %}
-            <tr class="low-stock-row">
-              <td>
-                <a href="/items/{{ item.id }}" class="fw-semibold">{{ item.name }}</a>
-                {% if item.category_name %}<br><span class="text-muted" style="font-size:12px">{{ item.category_name }}</span>{% endif %}
-              </td>
-              <td><span class="badge qty-warn">{{ item.quantity }} {{ item.unit }}</span></td>
-              <td><span class="text-muted" style="font-size:12px">min {{ item.low_stock_threshold }}</span></td>
-              <td><span class="text-muted" style="font-size:12px">{{ item.location_name or '—' }}</span></td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% else %}
-      <div class="card-bd text-center" style="padding:32px 18px;">
-        <i class="bi bi-check-circle-fill" style="font-size:28px;color:var(--green);display:block;margin-bottom:8px"></i>
-        <div class="fw-semibold" style="margin-bottom:3px">All stocked up</div>
-        <div class="text-muted" style="font-size:13px">No items below their thresholds.</div>
-      </div>
-      {% endif %}
-    </div>
-  </div>
 
-  <div class="col-12 col-lg-6">
-    <div class="card">
+  <!-- Recent activity — left, wider -->
+  <div class="col-12 col-lg-7">
+    <div class="card h-100">
       <div class="card-hd">
         <span><i class="bi bi-clock-history me-2" style="color:var(--muted)"></i>Recent Activity</span>
-        <a href="/transactions" class="btn btn-ghost btn-sm">View all</a>
+        <a href="/transactions" class="btn btn-ghost btn-sm" style="font-size:13px">View all</a>
       </div>
       {% if recent %}
-      <div style="max-height:380px;overflow-y:auto;">
+      <div style="overflow-y:auto;max-height:460px">
         {% for t in recent %}
-        <div style="padding:10px 18px;border-bottom:1px solid #f0f2f4;display:flex;align-items:flex-start;gap:10px;">
-          <span class="badge badge-action-{{ t.action }}" style="flex-shrink:0;margin-top:1px">{{ t.action }}</span>
-          <div style="flex:1;min-width:0;">
-            <a href="/items/{{ t.item_id }}" class="fw-semibold" style="color:var(--text)">{{ t.item_name }}</a>
-            {% if t.project %}<span class="text-muted"> · {{ t.project }}</span>{% endif %}
-            <div class="text-muted" style="font-size:12px;margin-top:1px">{{ t.user_name }} · {{ t.timestamp[:16] }}</div>
+        <div style="padding:9px 20px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:10px">
+          <span class="badge badge-action-{{ t.action }}" style="flex-shrink:0;min-width:64px;text-align:center">{{ t.action }}</span>
+          <div style="flex:1;min-width:0">
+            <a href="/items/{{ t.item_id }}" style="font-weight:500;color:var(--text)">{{ t.item_name }}</a>
+            {% if t.project %}<span class="text-muted" style="font-size:12px"> · {{ t.project }}</span>{% endif %}
+            <div class="text-muted" style="font-size:11px;margin-top:1px">{{ t.user_name }} · {{ t.timestamp[:16] }}</div>
           </div>
-          <span class="text-muted" style="font-size:12px;white-space:nowrap;flex-shrink:0">
-            {% if t.quantity_change > 0 %}<span style="color:var(--green)">+{{ t.quantity_change }}</span>{% else %}<span style="color:var(--red)">{{ t.quantity_change }}</span>{% endif %}
+          <span style="font-size:12px;font-weight:600;white-space:nowrap;flex-shrink:0">
+            {% if t.quantity_change > 0 %}<span style="color:var(--green)">+{{ t.quantity_change }}</span>
+            {% else %}<span style="color:var(--red)">{{ t.quantity_change }}</span>{% endif %}
           </span>
         </div>
         {% endfor %}
       </div>
       {% else %}
-      <div class="card-bd text-center" style="padding:32px 18px;">
-        <i class="bi bi-clock-history" style="font-size:28px;color:var(--muted);display:block;margin-bottom:8px"></i>
+      <div class="card-bd text-center" style="padding:40px 20px">
+        <i class="bi bi-clock-history" style="font-size:32px;color:var(--muted);display:block;margin-bottom:10px;opacity:.4"></i>
         <div class="text-muted" style="font-size:13px">No activity recorded yet.</div>
       </div>
       {% endif %}
     </div>
   </div>
+
+  <!-- Low stock — right, narrower -->
+  <div class="col-12 col-lg-5">
+    <div class="card h-100">
+      <div class="card-hd">
+        {% if low_stock %}
+        <span><i class="bi bi-exclamation-triangle-fill me-2" style="color:var(--red)"></i>Low Stock</span>
+        <span class="badge" style="background:var(--red-light);color:var(--red)">{{ low_stock|length }}</span>
+        {% else %}
+        <span><i class="bi bi-check-circle-fill me-2" style="color:var(--green)"></i>Stock Status</span>
+        {% endif %}
+      </div>
+      {% if low_stock %}
+      <div style="overflow-y:auto;max-height:460px">
+        {% for item in low_stock %}
+        <div style="padding:10px 20px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:10px">
+          <div style="flex:1;min-width:0">
+            <a href="/items/{{ item.id }}" style="font-weight:500;color:var(--text)">{{ item.name }}</a>
+            {% if item.location_name %}<div class="text-muted" style="font-size:11px">{{ item.location_name }}</div>{% endif %}
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <span class="badge qty-warn" style="display:block;margin-bottom:2px">{{ item.quantity }} {{ item.unit }}</span>
+            <span class="text-muted" style="font-size:11px">min {{ item.low_stock_threshold }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="card-bd text-center" style="padding:40px 20px">
+        <i class="bi bi-check-circle-fill" style="font-size:32px;color:var(--green);display:block;margin-bottom:10px"></i>
+        <div style="font-weight:500;margin-bottom:4px">All stocked up</div>
+        <div class="text-muted" style="font-size:13px">No items below reorder thresholds.</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
 </div>
 {% endblock %}
