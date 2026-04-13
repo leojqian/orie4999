@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Kits{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mt-4 mb-3">
+  <h4 class="mb-0 fw-bold"><i class="bi bi-collection me-2 text-primary"></i>Kits</h4>
+  <a href="/kits/new" class="btn btn-primary btn-sm no-print">
+    <i class="bi bi-plus-lg me-1"></i>Define Kit
+  </a>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Kit Name</th>
+          <th>Type</th>
+          <th>In Stock</th>
+          <th>Components</th>
+          <th>Location</th>
+          <th>SKU / Supplier</th>
+          <th class="no-print">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if kits %}
+          {% for kit in kits %}
+          <tr>
+            <td>
+              <a href="/kits/{{ kit.id }}" class="text-decoration-none fw-semibold">{{ kit.name }}</a>
+              {% if kit.notes %}
+                <br><small class="text-muted">{{ kit.notes[:60] }}{% if kit.notes|length > 60 %}…{% endif %}</small>
+              {% endif %}
+            </td>
+            <td>
+              {% if kit.kit_type == 'vendor' %}
+                <span class="badge bg-info text-dark"><i class="bi bi-truck me-1"></i>Vendor</span>
+              {% else %}
+                <span class="badge bg-success"><i class="bi bi-tools me-1"></i>Custom</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if kit.quantity == 0 %}
+                <span class="badge bg-secondary qty-badge">0 kits</span>
+              {% else %}
+                <span class="badge bg-success qty-badge">{{ kit.quantity }} kit{{ 's' if kit.quantity != 1 }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="text-muted small">{{ kit.component_count }} part type{{ 's' if kit.component_count != 1 }}</span>
+            </td>
+            <td>{{ kit.location_name or '—' }}</td>
+            <td>
+              {% if kit.sku %}<small class="text-muted d-block">SKU: {{ kit.sku }}</small>{% endif %}
+              {% if kit.supplier %}<small class="text-muted">{{ kit.supplier }}</small>{% endif %}
+              {% if not kit.sku and not kit.supplier %}—{% endif %}
+            </td>
+            <td class="no-print">
+              <a href="/kits/{{ kit.id }}" class="btn btn-sm btn-outline-secondary me-1" title="View">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="/kits/{{ kit.id }}/edit" class="btn btn-sm btn-outline-primary" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="7" class="text-center text-muted py-5">
+              <i class="bi bi-collection fs-1 d-block mb-2"></i>
+              No kits defined yet.
+              <a href="/kits/new">Define the first kit.</a>
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

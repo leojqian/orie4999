@@ -19,7 +19,10 @@
     .badge-action-checkout { background:#ffc107; color:#000; }
     .badge-action-checkin  { background:#198754; color:#fff; }
     .badge-action-restock  { background:#0d6efd; color:#fff; }
-    .badge-action-add      { background:#6f42c1; color:#fff; }
+    .badge-action-add          { background:#6f42c1; color:#fff; }
+    .badge-action-build        { background:#20c997; color:#fff; }
+    .badge-action-receive_vendor { background:#0dcaf0; color:#000; }
+    .badge-action-kit_build    { background:#20c997; color:#fff; }
     .low-stock-row { background:#fff3cd; }
     .qty-badge { font-size:.85rem; padding:.3em .6em; }
     .table th { font-size:.8rem; text-transform:uppercase; letter-spacing:.05em; color:#6c757d; }
@@ -50,6 +53,11 @@
         <li class="nav-item">
           <a class="nav-link {% if request.endpoint in ('items','item_detail','new_item','edit_item') %}active{% endif %}" href="/items">
             <i class="bi bi-grid me-1"></i>Inventory
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint in ('kits','kit_detail','new_kit','edit_kit') %}active{% endif %}" href="/kits">
+            <i class="bi bi-collection me-1"></i>Kits
           </a>
         </li>
         <li class="nav-item">

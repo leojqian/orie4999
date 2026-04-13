@@ -12,12 +12,24 @@
       <div class="card-header bg-white py-3"><span class="fw-semibold">Add Location</span></div>
       <div class="card-body">
         <form method="post">
-          <div class="input-group">
-            <input type="text" name="name" class="form-control" placeholder="e.g. Shelf C" required>
-            <button class="btn btn-primary" type="submit"><i class="bi bi-plus-lg"></i></button>
+          <div class="mb-3">
+            <label class="form-label small text-muted">Location Name</label>
+            <input type="text" name="name" class="form-control" placeholder="e.g. Row 2" required>
           </div>
+          <div class="mb-3">
+            <label class="form-label small text-muted">Parent Location <span class="text-muted">(optional)</span></label>
+            <select name="parent_id" class="form-select">
+              <option value="">— None (top level) —</option>
+              {% for loc in locations %}
+                {% if not loc.parent_id %}
+                <option value="{{ loc.id }}">{{ loc.name }}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+            <div class="form-text">Select a parent to create a nested location (e.g. Shelf A → Row 2).</div>
+          </div>
+          <button class="btn btn-primary w-100" type="submit"><i class="bi bi-plus-lg me-1"></i>Add Location</button>
         </form>
-        <div class="form-text mt-2">Examples: Shelf A, Cabinet 2, Fridge, Drawer 3B.</div>
       </div>
     </div>
   </div>
@@ -30,16 +42,32 @@
       </div>
       <ul class="list-group list-group-flush">
         {% if locations %}
+          {% set ns = namespace(last_parent=None) %}
           {% for loc in locations %}
-          <li class="list-group-item d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-geo me-2 text-muted"></i>{{ loc.name }}</span>
-            <form method="post" action="/locations/{{ loc.id }}/delete"
-                  onsubmit="return confirm('Delete location \'{{ loc.name }}\'?');">
-              <button class="btn btn-sm btn-outline-danger">
-                <i class="bi bi-trash"></i>
-              </button>
-            </form>
-          </li>
+            {% if not loc.parent_id %}
+              {# Top-level location #}
+              {% set ns.last_parent = loc.name %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span class="fw-semibold"><i class="bi bi-geo me-2 text-primary"></i>{{ loc.name }}</span>
+                <form method="post" action="/locations/{{ loc.id }}/delete"
+                      onsubmit="return confirm('Delete location \'{{ loc.name }}\'?');">
+                  <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                </form>
+              </li>
+            {% else %}
+              {# Child location #}
+              <li class="list-group-item d-flex justify-content-between align-items-center ps-4" style="border-left: 3px solid #dee2e6;">
+                <span class="text-muted small">
+                  <i class="bi bi-arrow-return-right me-1"></i>
+                  <span class="text-dark">{{ loc.name }}</span>
+                  <span class="ms-1 badge bg-light text-muted border" style="font-size:.7rem;">under {{ loc.parent_name }}</span>
+                </span>
+                <form method="post" action="/locations/{{ loc.id }}/delete"
+                      onsubmit="return confirm('Delete location \'{{ loc.name }}\'?');">
+                  <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                </form>
+              </li>
+            {% endif %}
           {% endfor %}
         {% else %}
           <li class="list-group-item text-muted text-center py-4">No locations yet.</li>

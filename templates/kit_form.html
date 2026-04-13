@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit Kit' if kit else 'Define Kit' }}{% endblock %}
+
+{% block content %}
+<div class="mt-4 mb-3 d-flex align-items-center">
+  <a href="{{ url_for('kit_detail', kit_id=kit.id) if kit else url_for('kits') }}"
+     class="btn btn-outline-secondary btn-sm me-3">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h4 class="mb-0 fw-bold">
+    <i class="bi bi-collection me-2 text-primary"></i>
+    {{ 'Edit Kit' if kit else 'Define New Kit' }}
+  </h4>
+</div>
+
+<form method="post">
+<div class="row g-4">
+
+  <!-- Left: basic info -->
+  <div class="col-12 col-lg-5">
+    <div class="card mb-4">
+      <div class="card-header bg-white py-3 fw-semibold">Kit Information</div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label">Kit Name <span class="text-danger">*</span></label>
+          <input type="text" name="name" class="form-control"
+                 value="{{ kit.name if kit else '' }}" required placeholder="e.g. Pump Seal Kit">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Kit Type <span class="text-danger">*</span></label>
+          <div class="d-flex gap-3">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="kit_type" value="custom" id="typeCustom"
+                     {% if not kit or kit.kit_type == 'custom' %}checked{% endif %}>
+              <label class="form-check-label" for="typeCustom">
+                <i class="bi bi-tools me-1 text-success"></i><strong>Custom-Built</strong>
+                <div class="text-muted small">Assembled in-lab from component parts</div>
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="kit_type" value="vendor" id="typeVendor"
+                     {% if kit and kit.kit_type == 'vendor' %}checked{% endif %}>
+              <label class="form-check-label" for="typeVendor">
+                <i class="bi bi-truck me-1 text-info"></i><strong>Vendor-Provided</strong>
+                <div class="text-muted small">Ships pre-assembled from supplier</div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Supplier</label>
+          <input type="text" name="supplier" class="form-control"
+                 value="{{ kit.supplier if kit else '' }}" placeholder="e.g. McMaster-Carr">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">SKU / Part Number</label>
+          <input type="text" name="sku" class="form-control"
+                 value="{{ kit.sku if kit else '' }}" placeholder="Vendor part number">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Storage Location</label>
+          <select name="location_id" class="form-select">
+            <option value="">— None —</option>
+            {% for loc in locations %}
+            <option value="{{ loc.id }}" {% if kit and kit.location_id == loc.id %}selected{% endif %}>
+              {{ loc.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Notes</label>
+          <textarea name="notes" class="form-control" rows="3"
+                    placeholder="Application, maintenance interval, etc.">{{ kit.notes if kit else '' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary flex-grow-1">
+        <i class="bi bi-check-lg me-1"></i>{{ 'Save Changes' if kit else 'Create Kit' }}
+      </button>
+      <a href="{{ url_for('kit_detail', kit_id=kit.id) if kit else url_for('kits') }}"
+         class="btn btn-outline-secondary">Cancel</a>
+    </div>
+  </div>
+
+  <!-- Right: components -->
+  <div class="col-12 col-lg-7">
+    <div class="card">
+      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <span class="fw-semibold"><i class="bi bi-list-ul me-2"></i>Component Parts</span>
+        <button type="button" class="btn btn-outline-primary btn-sm" id="addComponentBtn">
+          <i class="bi bi-plus-lg me-1"></i>Add Part
+        </button>
+      </div>
+      <div class="card-body p-0">
+        <div class="text-muted small px-3 py-2 bg-light border-bottom">
+          Define which inventory items go into one kit and how many of each are needed.
+        </div>
+        <table class="table align-middle mb-0" id="componentTable">
+          <thead class="table-light">
+            <tr>
+              <th>Component Item</th>
+              <th style="width:130px">Qty per Kit</th>
+              <th style="width:50px"></th>
+            </tr>
+          </thead>
+          <tbody id="componentRows">
+            {% for comp in components %}
+            <tr class="component-row">
+              <td>
+                <select name="component_item_id" class="form-select form-select-sm" required>
+                  <option value="">— Select item —</option>
+                  {% for item in items %}
+                  <option value="{{ item.id }}"
+                    {% if item.id == comp.item_id %}selected{% endif %}>
+                    {{ item.name }} ({{ item.unit }})
+                  </option>
+                  {% endfor %}
+                </select>
+              </td>
+              <td>
+                <input type="number" name="component_qty" class="form-control form-control-sm"
+                       value="{{ comp.quantity_per_kit }}" min="0.001" step="any" required>
+              </td>
+              <td>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-row-btn">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% if not components %}
+        <div class="text-center text-muted py-4" id="emptyMsg">
+          <i class="bi bi-inbox d-block mb-1"></i>No components yet. Click "Add Part" to begin.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+</form>
+
+<!-- Hidden template row (not submitted) -->
+<template id="rowTemplate">
+  <tr class="component-row">
+    <td>
+      <select name="component_item_id" class="form-select form-select-sm" required>
+        <option value="">— Select item —</option>
+        {% for item in items %}
+        <option value="{{ item.id }}">{{ item.name }} ({{ item.unit }})</option>
+        {% endfor %}
+      </select>
+    </td>
+    <td>
+      <input type="number" name="component_qty" class="form-control form-control-sm"
+             value="1" min="0.001" step="any" required>
+    </td>
+    <td>
+      <button type="button" class="btn btn-sm btn-outline-danger remove-row-btn">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </td>
+  </tr>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const tbody    = document.getElementById('componentRows');
+  const template = document.getElementById('rowTemplate');
+  const emptyMsg = document.getElementById('emptyMsg');
+
+  function updateEmpty() {
+    if (!emptyMsg) return;
+    emptyMsg.style.display = tbody.querySelectorAll('.component-row').length ? 'none' : 'block';
+  }
+
+  document.getElementById('addComponentBtn').addEventListener('click', function () {
+    const clone = template.content.cloneNode(true);
+    tbody.appendChild(clone);
+    updateEmpty();
+  });
+
+  tbody.addEventListener('click', function (e) {
+    const btn = e.target.closest('.remove-row-btn');
+    if (btn) {
+      btn.closest('.component-row').remove();
+      updateEmpty();
+    }
+  });
+
+  updateEmpty();
+</script>
+{% endblock %}

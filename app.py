@@ -63,6 +63,39 @@ def init_db():
             notes           TEXT,
             timestamp       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+
+        CREATE TABLE IF NOT EXISTS kits (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            name        TEXT    NOT NULL,
+            kit_type    TEXT    NOT NULL DEFAULT 'custom',
+            supplier    TEXT,
+            sku         TEXT,
+            quantity    INTEGER NOT NULL DEFAULT 0,
+            location_id INTEGER REFERENCES locations(id),
+            notes       TEXT,
+            created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS kit_components (
+            id               INTEGER PRIMARY KEY AUTOINCREMENT,
+            kit_id           INTEGER NOT NULL REFERENCES kits(id) ON DELETE CASCADE,
+            item_id          INTEGER NOT NULL REFERENCES items(id),
+            quantity_per_kit REAL    NOT NULL DEFAULT 1
+        );
+
+        CREATE TABLE IF NOT EXISTS kit_transactions (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            kit_id          INTEGER NOT NULL REFERENCES kits(id),
+            action          TEXT    NOT NULL,
+            quantity_change INTEGER NOT NULL,
+            quantity_before INTEGER NOT NULL,
+            quantity_after  INTEGER NOT NULL,
+            user_name       TEXT    NOT NULL,
+            project         TEXT,
+            notes           TEXT,
+            timestamp       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
     """)
     # Default seed data
     for cat in ("Consumable", "Component", "Tool", "Material"):
@@ -425,15 +458,21 @@ def delete_category(cat_id):
 def locations():
     db = get_db()
     if request.method == "POST":
-        name = request.form.get("name", "").strip()
+        name      = request.form.get("name", "").strip()
+        parent_id = request.form.get("parent_id") or None
         if name:
             try:
-                db.execute("INSERT INTO locations (name) VALUES (?)", (name,))
+                db.execute("INSERT INTO locations (name, parent_id) VALUES (?, ?)", (name, parent_id))
                 db.commit()
                 flash(f'Location "{name}" added.', "success")
             except Exception:
                 flash(f'Location "{name}" already exists.', "danger")
-    locs = db.execute("SELECT * FROM locations ORDER BY name").fetchall()
+    locs = db.execute("""
+        SELECT l.*, p.name AS parent_name
+        FROM locations l
+        LEFT JOIN locations p ON l.parent_id = p.id
+        ORDER BY COALESCE(p.name, l.name), l.parent_id NULLS FIRST, l.name
+    """).fetchall()
     db.close()
     return render_template("locations.html", locations=locs)
 
@@ -449,6 +488,329 @@ def delete_location(loc_id):
         flash(f'Location "{loc["name"]}" deleted.', "success")
     db.close()
     return redirect(url_for("locations"))
+
+
+# ---------------------------------------------------------------------------
+# Kits
+# ---------------------------------------------------------------------------
+
+@app.route("/kits")
+def kits():
+    db = get_db()
+    kit_list = db.execute("""
+        SELECT k.*, l.name AS location_name,
+               COUNT(kc.id) AS component_count
+        FROM kits k
+        LEFT JOIN locations l ON k.location_id = l.id
+        LEFT JOIN kit_components kc ON k.id = kc.kit_id
+        GROUP BY k.id
+        ORDER BY k.name
+    """).fetchall()
+    db.close()
+    return render_template("kits.html", kits=kit_list)
+
+
+@app.route("/kits/new", methods=["GET", "POST"])
+def new_kit():
+    db = get_db()
+    if request.method == "POST":
+        name      = request.form["name"].strip()
+        kit_type  = request.form.get("kit_type", "custom")
+        supplier  = request.form.get("supplier", "").strip()
+        sku       = request.form.get("sku", "").strip()
+        loc_id    = request.form.get("location_id") or None
+        notes     = request.form.get("notes", "").strip()
+
+        cur = db.execute("""
+            INSERT INTO kits (name, kit_type, supplier, sku, location_id, notes)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (name, kit_type, supplier, sku, loc_id, notes))
+        kit_id = cur.lastrowid
+
+        item_ids   = request.form.getlist("component_item_id")
+        quantities = request.form.getlist("component_qty")
+        for iid, qty in zip(item_ids, quantities):
+            if iid and qty:
+                db.execute("""
+                    INSERT INTO kit_components (kit_id, item_id, quantity_per_kit)
+                    VALUES (?, ?, ?)
+                """, (kit_id, int(iid), float(qty)))
+
+        db.commit()
+        db.close()
+        flash(f'Kit "{name}" created.', "success")
+        return redirect(url_for("kit_detail", kit_id=kit_id))
+
+    items     = db.execute("SELECT id, name, unit FROM items ORDER BY name").fetchall()
+    locations = db.execute("SELECT * FROM locations ORDER BY name").fetchall()
+    db.close()
+    return render_template("kit_form.html", kit=None, items=items,
+                           locations=locations, components=[])
+
+
+@app.route("/kits/<int:kit_id>")
+def kit_detail(kit_id):
+    db = get_db()
+    kit = db.execute("""
+        SELECT k.*, l.name AS location_name
+        FROM kits k
+        LEFT JOIN locations l ON k.location_id = l.id
+        WHERE k.id = ?
+    """, (kit_id,)).fetchone()
+    if not kit:
+        flash("Kit not found.", "danger")
+        return redirect(url_for("kits"))
+
+    components = db.execute("""
+        SELECT kc.*, i.name AS item_name, i.quantity AS item_quantity,
+               i.unit AS item_unit, i.low_stock_threshold
+        FROM kit_components kc
+        JOIN items i ON kc.item_id = i.id
+        WHERE kc.kit_id = ?
+        ORDER BY i.name
+    """, (kit_id,)).fetchall()
+
+    history = db.execute("""
+        SELECT * FROM kit_transactions WHERE kit_id = ?
+        ORDER BY timestamp DESC LIMIT 30
+    """, (kit_id,)).fetchall()
+
+    max_buildable = None
+    for comp in components:
+        if comp["quantity_per_kit"] > 0:
+            buildable = int(comp["item_quantity"] / comp["quantity_per_kit"])
+            if max_buildable is None or buildable < max_buildable:
+                max_buildable = buildable
+
+    db.close()
+    return render_template("kit_detail.html", kit=kit, components=components,
+                           history=history, max_buildable=max_buildable if max_buildable is not None else 0)
+
+
+@app.route("/kits/<int:kit_id>/edit", methods=["GET", "POST"])
+def edit_kit(kit_id):
+    db = get_db()
+    kit = db.execute("SELECT * FROM kits WHERE id = ?", (kit_id,)).fetchone()
+    if not kit:
+        flash("Kit not found.", "danger")
+        return redirect(url_for("kits"))
+
+    if request.method == "POST":
+        name     = request.form["name"].strip()
+        kit_type = request.form.get("kit_type", "custom")
+        supplier = request.form.get("supplier", "").strip()
+        sku      = request.form.get("sku", "").strip()
+        loc_id   = request.form.get("location_id") or None
+        notes    = request.form.get("notes", "").strip()
+
+        db.execute("""
+            UPDATE kits SET name=?, kit_type=?, supplier=?, sku=?,
+                            location_id=?, notes=?, updated_at=CURRENT_TIMESTAMP
+            WHERE id=?
+        """, (name, kit_type, supplier, sku, loc_id, notes, kit_id))
+
+        db.execute("DELETE FROM kit_components WHERE kit_id = ?", (kit_id,))
+        item_ids   = request.form.getlist("component_item_id")
+        quantities = request.form.getlist("component_qty")
+        for iid, qty in zip(item_ids, quantities):
+            if iid and qty:
+                db.execute("""
+                    INSERT INTO kit_components (kit_id, item_id, quantity_per_kit)
+                    VALUES (?, ?, ?)
+                """, (kit_id, int(iid), float(qty)))
+
+        db.commit()
+        db.close()
+        flash(f'Kit "{name}" updated.', "success")
+        return redirect(url_for("kit_detail", kit_id=kit_id))
+
+    components = db.execute("""
+        SELECT kc.*, i.name AS item_name
+        FROM kit_components kc
+        JOIN items i ON kc.item_id = i.id
+        WHERE kc.kit_id = ?
+    """, (kit_id,)).fetchall()
+    items     = db.execute("SELECT id, name, unit FROM items ORDER BY name").fetchall()
+    locations = db.execute("SELECT * FROM locations ORDER BY name").fetchall()
+    db.close()
+    return render_template("kit_form.html", kit=kit, items=items,
+                           locations=locations, components=components)
+
+
+@app.route("/kits/<int:kit_id>/delete", methods=["POST"])
+def delete_kit(kit_id):
+    db = get_db()
+    kit = db.execute("SELECT name FROM kits WHERE id = ?", (kit_id,)).fetchone()
+    if kit:
+        db.execute("DELETE FROM kit_transactions WHERE kit_id = ?", (kit_id,))
+        db.execute("DELETE FROM kit_components WHERE kit_id = ?", (kit_id,))
+        db.execute("DELETE FROM kits WHERE id = ?", (kit_id,))
+        db.commit()
+        flash(f'Kit "{kit["name"]}" deleted.', "success")
+    db.close()
+    return redirect(url_for("kits"))
+
+
+@app.route("/kits/<int:kit_id>/build", methods=["POST"])
+def build_kit(kit_id):
+    """Assemble custom kits: deduct components, increment kit count."""
+    db = get_db()
+    kit = db.execute("SELECT * FROM kits WHERE id = ?", (kit_id,)).fetchone()
+    if not kit:
+        flash("Kit not found.", "danger")
+        db.close()
+        return redirect(url_for("kits"))
+
+    qty       = max(1, int(request.form.get("quantity", 1)))
+    user_name = request.form.get("user_name", "Unknown").strip() or "Unknown"
+    notes     = request.form.get("notes", "").strip()
+
+    components = db.execute("""
+        SELECT kc.*, i.name AS item_name, i.quantity AS item_quantity, i.unit AS item_unit
+        FROM kit_components kc
+        JOIN items i ON kc.item_id = i.id
+        WHERE kc.kit_id = ?
+    """, (kit_id,)).fetchall()
+
+    if not components:
+        flash("Cannot build kit: no components defined.", "danger")
+        db.close()
+        return redirect(url_for("kit_detail", kit_id=kit_id))
+
+    # Validate all components have sufficient stock
+    for comp in components:
+        needed = comp["quantity_per_kit"] * qty
+        if comp["item_quantity"] < needed:
+            flash(
+                f'Not enough "{comp["item_name"]}" '
+                f'(need {needed} {comp["item_unit"]}, have {comp["item_quantity"]}).',
+                "danger"
+            )
+            db.close()
+            return redirect(url_for("kit_detail", kit_id=kit_id))
+
+    # Deduct each component
+    for comp in components:
+        needed = comp["quantity_per_kit"] * qty
+        ok, result = _apply_transaction(
+            db, comp["item_id"], "kit_build", -needed, user_name, "",
+            f'Built {qty}x kit "{kit["name"]}"'
+        )
+        if not ok:
+            flash(result, "danger")
+            db.close()
+            return redirect(url_for("kit_detail", kit_id=kit_id))
+
+    # Increment kit stock
+    qty_before = kit["quantity"]
+    qty_after  = qty_before + qty
+    db.execute("UPDATE kits SET quantity=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
+               (qty_after, kit_id))
+    db.execute("""
+        INSERT INTO kit_transactions
+            (kit_id, action, quantity_change, quantity_before, quantity_after, user_name, notes)
+        VALUES (?, 'build', ?, ?, ?, ?, ?)
+    """, (kit_id, qty, qty_before, qty_after, user_name, notes))
+
+    db.commit()
+    db.close()
+    flash(f'Assembled {qty} kit(s) of "{kit["name"]}". Components deducted from inventory.', "success")
+    return redirect(url_for("kit_detail", kit_id=kit_id))
+
+
+@app.route("/kits/<int:kit_id>/receive", methods=["POST"])
+def receive_kit(kit_id):
+    """Receive vendor-supplied kits (no component deduction)."""
+    db = get_db()
+    kit = db.execute("SELECT * FROM kits WHERE id = ?", (kit_id,)).fetchone()
+    if not kit:
+        flash("Kit not found.", "danger")
+        db.close()
+        return redirect(url_for("kits"))
+
+    qty       = max(1, int(request.form.get("quantity", 1)))
+    user_name = request.form.get("user_name", "Unknown").strip() or "Unknown"
+    notes     = request.form.get("notes", "").strip()
+
+    qty_before = kit["quantity"]
+    qty_after  = qty_before + qty
+    db.execute("UPDATE kits SET quantity=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
+               (qty_after, kit_id))
+    db.execute("""
+        INSERT INTO kit_transactions
+            (kit_id, action, quantity_change, quantity_before, quantity_after, user_name, notes)
+        VALUES (?, 'receive_vendor', ?, ?, ?, ?, ?)
+    """, (kit_id, qty, qty_before, qty_after, user_name, notes))
+
+    db.commit()
+    db.close()
+    flash(f'Received {qty} vendor kit(s) of "{kit["name"]}".', "success")
+    return redirect(url_for("kit_detail", kit_id=kit_id))
+
+
+@app.route("/kits/<int:kit_id>/checkout", methods=["POST"])
+def checkout_kit(kit_id):
+    db = get_db()
+    kit = db.execute("SELECT * FROM kits WHERE id = ?", (kit_id,)).fetchone()
+    if not kit:
+        flash("Kit not found.", "danger")
+        db.close()
+        return redirect(url_for("kits"))
+
+    qty       = max(1, int(request.form.get("quantity", 1)))
+    user_name = request.form.get("user_name", "Unknown").strip() or "Unknown"
+    project   = request.form.get("project", "").strip()
+    notes     = request.form.get("notes", "").strip()
+
+    qty_before = kit["quantity"]
+    if qty_before < qty:
+        flash(f'Not enough kits in stock (available: {qty_before}).', "danger")
+        db.close()
+        return redirect(url_for("kit_detail", kit_id=kit_id))
+
+    qty_after = qty_before - qty
+    db.execute("UPDATE kits SET quantity=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
+               (qty_after, kit_id))
+    db.execute("""
+        INSERT INTO kit_transactions
+            (kit_id, action, quantity_change, quantity_before, quantity_after, user_name, project, notes)
+        VALUES (?, 'checkout', ?, ?, ?, ?, ?, ?)
+    """, (kit_id, -qty, qty_before, qty_after, user_name, project, notes))
+
+    db.commit()
+    db.close()
+    flash(f'Checked out {qty} kit(s) of "{kit["name"]}".', "success")
+    return redirect(url_for("kit_detail", kit_id=kit_id))
+
+
+@app.route("/kits/<int:kit_id>/checkin", methods=["POST"])
+def checkin_kit(kit_id):
+    db = get_db()
+    kit = db.execute("SELECT * FROM kits WHERE id = ?", (kit_id,)).fetchone()
+    if not kit:
+        flash("Kit not found.", "danger")
+        db.close()
+        return redirect(url_for("kits"))
+
+    qty       = max(1, int(request.form.get("quantity", 1)))
+    user_name = request.form.get("user_name", "Unknown").strip() or "Unknown"
+    project   = request.form.get("project", "").strip()
+    notes     = request.form.get("notes", "").strip()
+
+    qty_before = kit["quantity"]
+    qty_after  = qty_before + qty
+    db.execute("UPDATE kits SET quantity=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
+               (qty_after, kit_id))
+    db.execute("""
+        INSERT INTO kit_transactions
+            (kit_id, action, quantity_change, quantity_before, quantity_after, user_name, project, notes)
+        VALUES (?, 'checkin', ?, ?, ?, ?, ?, ?)
+    """, (kit_id, qty, qty_before, qty_after, user_name, project, notes))
+
+    db.commit()
+    db.close()
+    flash(f'Returned {qty} kit(s) of "{kit["name"]}".', "success")
+    return redirect(url_for("kit_detail", kit_id=kit_id))
 
 
 # ---------------------------------------------------------------------------
