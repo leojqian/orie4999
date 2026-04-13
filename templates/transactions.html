@@ -1,38 +1,45 @@
 {% extends "base.html" %}
-{% block title %}Transaction Log{% endblock %}
+{% block title %}Transactions{% endblock %}
 
 {% block content %}
-<div class="d-flex align-items-center justify-content-between mt-4 mb-3">
-  <h4 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2 text-primary"></i>Transaction Log</h4>
+<div class="pg-header">
+  <h1 class="pg-title">Transaction Log</h1>
 </div>
 
 <!-- Filter bar -->
 <div class="card mb-3 no-print">
-  <div class="card-body py-2">
-    <div class="d-flex gap-2 flex-wrap align-items-center">
-      <span class="text-muted small me-1">Filter by action:</span>
-      {% for action in ['', 'checkout', 'checkin', 'restock', 'add'] %}
+  <div class="card-bd" style="padding:12px 18px">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span class="text-muted" style="font-size:13px;font-weight:500">Filter:</span>
+      {% for action in ['', 'checkout', 'checkin', 'restock', 'add', 'kit_build'] %}
       <a href="/transactions{% if action %}?action={{ action }}{% endif %}"
-         class="btn btn-sm {% if selected_action == action %}btn-dark{% else %}btn-outline-secondary{% endif %}">
-        {% if action %}{{ action }}{% else %}All{% endif %}
+         style="padding:5px 12px;border-radius:20px;font-size:13px;font-weight:500;text-decoration:none;border:1.5px solid;
+                {% if selected_action == action %}
+                  background:var(--blue);border-color:var(--blue);color:white;
+                {% else %}
+                  background:white;border-color:var(--border);color:var(--muted);
+                {% endif %}">
+        {% if action %}
+          <span class="badge badge-action-{{ action }}" style="margin-right:4px;font-size:11px">{{ action }}</span>
+        {% else %}All{% endif %}
       </a>
       {% endfor %}
     </div>
   </div>
 </div>
 
-<div class="text-muted small mb-2">Showing {{ transactions|length }} most recent entries</div>
+<div class="text-muted mb-2" style="font-size:13px">{{ transactions|length }} most recent entries</div>
 
 <div class="card">
   <div class="table-responsive">
-    <table class="table table-hover mb-0 align-middle">
-      <thead class="table-light">
+    <table class="table mb-0">
+      <thead>
         <tr>
-          <th>Timestamp</th>
+          <th>Time</th>
           <th>Action</th>
           <th>Item</th>
-          <th>Qty Change</th>
-          <th>Balance After</th>
+          <th>Change</th>
+          <th>Balance</th>
           <th>User</th>
           <th>Project</th>
           <th>Notes</th>
@@ -42,29 +49,29 @@
         {% if transactions %}
           {% for t in transactions %}
           <tr>
-            <td><small class="text-muted font-monospace">{{ t.timestamp[:16] }}</small></td>
+            <td style="color:var(--muted);font-size:12px;white-space:nowrap">{{ t.timestamp[:16] }}</td>
             <td><span class="badge badge-action-{{ t.action }}">{{ t.action }}</span></td>
             <td>
-              <a href="/items/{{ t.item_id }}" class="text-decoration-none fw-semibold">{{ t.item_name }}</a>
+              <a href="/items/{{ t.item_id }}" class="fw-semibold" style="color:var(--text)">{{ t.item_name }}</a>
             </td>
             <td>
               {% if t.quantity_change > 0 %}
-                <span class="text-success fw-semibold">+{{ t.quantity_change }}</span>
+                <span style="color:var(--green);font-weight:600">+{{ t.quantity_change }}</span>
               {% else %}
-                <span class="text-danger fw-semibold">{{ t.quantity_change }}</span>
+                <span style="color:var(--red);font-weight:600">{{ t.quantity_change }}</span>
               {% endif %}
             </td>
-            <td>{{ t.quantity_after }}</td>
-            <td><small>{{ t.user_name }}</small></td>
-            <td><small class="text-muted">{{ t.project or '—' }}</small></td>
-            <td><small class="text-muted">{{ t.notes or '—' }}</small></td>
+            <td style="color:var(--muted)">{{ t.quantity_after }}</td>
+            <td style="font-size:13px">{{ t.user_name }}</td>
+            <td style="font-size:12px;color:var(--muted)">{{ t.project or '—' }}</td>
+            <td style="font-size:12px;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ t.notes or '—' }}</td>
           </tr>
           {% endfor %}
         {% else %}
           <tr>
-            <td colspan="8" class="text-center text-muted py-5">
-              <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-              No transactions recorded yet.
+            <td colspan="8" style="text-align:center;padding:48px;color:var(--muted)">
+              <i class="bi bi-arrow-left-right" style="font-size:36px;display:block;margin-bottom:10px;opacity:.4"></i>
+              <div class="fw-semibold">No transactions recorded yet.</div>
             </td>
           </tr>
         {% endif %}

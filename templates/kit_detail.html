@@ -2,101 +2,79 @@
 {% block title %}{{ kit.name }}{% endblock %}
 
 {% block content %}
-<div class="mt-4 mb-3 d-flex align-items-center">
-  <a href="{{ url_for('kits') }}" class="btn btn-outline-secondary btn-sm me-3">
-    <i class="bi bi-arrow-left"></i>
-  </a>
-  <h4 class="mb-0 fw-bold">
-    <i class="bi bi-collection me-2 text-primary"></i>{{ kit.name }}
-  </h4>
-  <span class="ms-3">
+<div class="pg-header">
+  <div class="pg-title-row">
+    <a href="{{ url_for('kits') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+    <h1 class="pg-title">{{ kit.name }}</h1>
     {% if kit.kit_type == 'vendor' %}
-      <span class="badge bg-info text-dark"><i class="bi bi-truck me-1"></i>Vendor-Provided</span>
+      <span class="badge badge-blue"><i class="bi bi-truck"></i> Vendor-Provided</span>
     {% else %}
-      <span class="badge bg-success"><i class="bi bi-tools me-1"></i>Custom-Built</span>
+      <span class="badge badge-teal"><i class="bi bi-tools"></i> Custom-Built</span>
     {% endif %}
-  </span>
+  </div>
+  <div style="display:flex;gap:8px" class="no-print">
+    <a href="/kits/{{ kit.id }}/edit" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i> Edit</a>
+  </div>
 </div>
 
-<div class="row g-4">
+<div class="row g-3">
 
-  <!-- Left sidebar -->
+  <!-- Left column -->
   <div class="col-12 col-lg-4">
 
-    <!-- Kit info -->
+    <!-- Stock card -->
     <div class="card mb-3">
-      <div class="card-header bg-white py-3 fw-semibold">Kit Details</div>
-      <div class="card-body small">
-        <table class="table table-borderless table-sm mb-0">
-          <tr>
-            <td class="text-muted" style="width:40%">Location</td>
-            <td>{{ kit.location_name or '—' }}</td>
-          </tr>
-          {% if kit.supplier %}
-          <tr>
-            <td class="text-muted">Supplier</td>
-            <td>{{ kit.supplier }}</td>
-          </tr>
-          {% endif %}
-          {% if kit.sku %}
-          <tr>
-            <td class="text-muted">SKU</td>
-            <td><code>{{ kit.sku }}</code></td>
-          </tr>
-          {% endif %}
-          {% if kit.notes %}
-          <tr>
-            <td class="text-muted">Notes</td>
-            <td>{{ kit.notes }}</td>
-          </tr>
-          {% endif %}
+      <div class="card-bd" style="text-align:center;padding:24px 18px">
+        {% if kit.quantity == 0 %}
+          <div style="font-size:38px;font-weight:700;color:var(--muted);line-height:1">0</div>
+          <div style="font-size:14px;color:var(--muted);margin-top:4px">kits in stock</div>
+        {% else %}
+          <div style="font-size:38px;font-weight:700;color:var(--green);line-height:1">{{ kit.quantity }}</div>
+          <div style="font-size:14px;color:var(--muted);margin-top:4px">kit{{ 's' if kit.quantity != 1 }} in stock</div>
+        {% endif %}
+        {% if components and kit.kit_type == 'custom' %}
+          <hr style="margin:14px 0">
+          <div style="font-size:13px;color:var(--muted)">
+            Can build up to
+            <strong style="color:{% if max_buildable == 0 %}var(--red){% else %}var(--green){% endif %}">{{ max_buildable }}</strong>
+            more kit{{ 's' if max_buildable != 1 }} from current stock
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Details -->
+    <div class="card mb-3">
+      <div class="card-hd">Details</div>
+      <div class="card-bd" style="padding:0">
+        <table style="width:100%;border-collapse:collapse;font-size:13.5px">
+          {% if kit.location_name %}<tr><td style="padding:10px 18px;color:var(--muted);font-weight:500;width:44%;border-bottom:1px solid #f0f2f4">Location</td><td style="padding:10px 18px;border-bottom:1px solid #f0f2f4">{{ kit.location_name }}</td></tr>{% endif %}
+          {% if kit.supplier %}<tr><td style="padding:10px 18px;color:var(--muted);font-weight:500;border-bottom:1px solid #f0f2f4">Supplier</td><td style="padding:10px 18px;border-bottom:1px solid #f0f2f4">{{ kit.supplier }}</td></tr>{% endif %}
+          {% if kit.sku %}<tr><td style="padding:10px 18px;color:var(--muted);font-weight:500;border-bottom:1px solid #f0f2f4">SKU</td><td style="padding:10px 18px;border-bottom:1px solid #f0f2f4"><code>{{ kit.sku }}</code></td></tr>{% endif %}
+          {% if kit.notes %}<tr><td style="padding:10px 18px;color:var(--muted);font-weight:500">Notes</td><td style="padding:10px 18px">{{ kit.notes }}</td></tr>{% endif %}
         </table>
       </div>
     </div>
 
-    <!-- Stock badge -->
-    <div class="card mb-3">
-      <div class="card-body text-center py-4">
-        {% if kit.quantity == 0 %}
-          <span class="badge bg-secondary fs-4 px-4 py-2">0 kits</span>
-        {% else %}
-          <span class="badge bg-success fs-4 px-4 py-2">{{ kit.quantity }} kit{{ 's' if kit.quantity != 1 }}</span>
-        {% endif %}
-        <div class="text-muted small mt-2">kits currently in stock</div>
-        {% if components and kit.kit_type == 'custom' %}
-          <hr class="my-2">
-          <div class="small">
-            Can build up to
-            <strong class="{% if max_buildable == 0 %}text-danger{% else %}text-success{% endif %}">
-              {{ max_buildable }}
-            </strong>
-            more kit{{ 's' if max_buildable != 1 }} from current component stock
-          </div>
-        {% endif %}
-      </div>
-    </div>
-
-    <!-- Component reorder status -->
+    <!-- Component stock status -->
     {% if components %}
     <div class="card mb-3">
-      <div class="card-header bg-white py-3 fw-semibold small">Component Stock Status</div>
-      <ul class="list-group list-group-flush">
+      <div class="card-hd" style="font-size:13px">Component Stock</div>
+      <ul class="list-group-flush">
         {% for comp in components %}
-        <li class="list-group-item small py-2">
-          <div class="d-flex justify-content-between align-items-start">
-            <a href="/items/{{ comp.item_id }}" class="text-decoration-none text-dark">{{ comp.item_name }}</a>
-            {% set avail = (comp.item_quantity / comp.quantity_per_kit)|int %}
+        <li class="list-group-item" style="flex-direction:column;align-items:flex-start;gap:4px">
+          <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
+            <a href="/items/{{ comp.item_id }}" style="color:var(--text);font-weight:500;font-size:13px">{{ comp.item_name }}</a>
             {% if comp.low_stock_threshold > 0 and comp.item_quantity <= comp.low_stock_threshold %}
-              <span class="badge bg-danger">Low</span>
+              <span class="badge badge-red" style="font-size:11px">Low</span>
             {% elif comp.item_quantity == 0 %}
-              <span class="badge bg-secondary">Out</span>
+              <span class="badge badge-neutral" style="font-size:11px">Out</span>
             {% else %}
-              <span class="badge bg-success">OK</span>
+              <span class="badge badge-green" style="font-size:11px">OK</span>
             {% endif %}
           </div>
-          <div class="text-muted" style="font-size:.75rem;">
-            Need {{ comp.quantity_per_kit }} {{ comp.item_unit }}/kit &nbsp;&bull;&nbsp;
-            Have {{ comp.item_quantity }} {{ comp.item_unit }}
+          <div style="font-size:11.5px;color:var(--muted)">
+            Need {{ comp.quantity_per_kit }} {{ comp.item_unit }}/kit &nbsp;·&nbsp; Have {{ comp.item_quantity }} {{ comp.item_unit }}
           </div>
         </li>
         {% endfor %}
@@ -105,176 +83,145 @@
     {% endif %}
 
     <!-- Danger zone -->
-    <div class="card border-danger no-print">
-      <div class="card-body py-2 d-flex justify-content-between align-items-center">
-        <a href="/kits/{{ kit.id }}/edit" class="btn btn-outline-primary btn-sm">
-          <i class="bi bi-pencil me-1"></i>Edit Kit
-        </a>
+    <div class="card no-print" style="border-color:#f5c5c5">
+      <div class="card-bd" style="padding:12px 18px">
         <form method="post" action="/kits/{{ kit.id }}/delete"
               onsubmit="return confirm('Permanently delete kit \'{{ kit.name }}\'?');">
-          <button class="btn btn-outline-danger btn-sm">
-            <i class="bi bi-trash me-1"></i>Delete
+          <button class="btn btn-outline-danger" style="width:100%">
+            <i class="bi bi-trash"></i> Delete Kit
           </button>
         </form>
       </div>
     </div>
   </div>
 
-  <!-- Right: actions + components + history -->
+  <!-- Right column -->
   <div class="col-12 col-lg-8">
 
     <!-- Action tabs -->
-    <div class="card mb-4 no-print">
-      <div class="card-header bg-white">
-        <ul class="nav nav-tabs card-header-tabs" id="actionTabs">
+    <div class="card mb-3 no-print">
+      <div style="padding:0 4px;border-bottom:2px solid var(--border)">
+        <ul class="nav-tabs" id="kitActionTabs" style="border:none;margin:0">
           {% if kit.kit_type == 'custom' %}
-          <li class="nav-item">
-            <a class="nav-link active" data-bs-toggle="tab" href="#tabBuild">
-              <i class="bi bi-tools me-1"></i>Build
-            </a>
-          </li>
+          <li><a class="nav-link active" data-bs-toggle="tab" href="#tab-build"><i class="bi bi-tools me-1"></i>Build</a></li>
           {% else %}
-          <li class="nav-item">
-            <a class="nav-link active" data-bs-toggle="tab" href="#tabReceive">
-              <i class="bi bi-truck me-1"></i>Receive
-            </a>
-          </li>
+          <li><a class="nav-link active" data-bs-toggle="tab" href="#tab-receive"><i class="bi bi-truck me-1"></i>Receive</a></li>
           {% endif %}
-          <li class="nav-item">
-            <a class="nav-link {% if kit.kit_type == 'vendor' %}{% endif %}" data-bs-toggle="tab" href="#tabCheckout">
-              <i class="bi bi-box-arrow-right me-1"></i>Checkout
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" data-bs-toggle="tab" href="#tabCheckin">
-              <i class="bi bi-box-arrow-in-left me-1"></i>Return
-            </a>
-          </li>
+          <li><a class="nav-link" data-bs-toggle="tab" href="#tab-kco"><i class="bi bi-box-arrow-right me-1"></i>Check Out</a></li>
+          <li><a class="nav-link" data-bs-toggle="tab" href="#tab-kci"><i class="bi bi-box-arrow-in-left me-1"></i>Return</a></li>
         </ul>
       </div>
-      <div class="card-body tab-content pt-3">
+      <div class="tab-content card-bd">
 
-        <!-- Build tab (custom kits only) -->
         {% if kit.kit_type == 'custom' %}
-        <div class="tab-pane fade show active" id="tabBuild">
-          <p class="text-muted small mb-3">
-            Assembles kits in-lab. Each kit built deducts the listed component quantities from inventory.
+        <div class="tab-pane show" id="tab-build">
+          <p class="text-muted" style="font-size:13px;margin-bottom:14px">
+            Assemble kits in-lab. Each kit built deducts the listed component quantities from inventory stock.
           </p>
           {% if not components %}
-            <div class="alert alert-warning small mb-0">
-              <i class="bi bi-exclamation-triangle me-1"></i>
-              No components defined. <a href="/kits/{{ kit.id }}/edit">Edit this kit</a> to add parts.
+            <div class="alert alert-warning">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              No components defined. <a href="/kits/{{ kit.id }}/edit">Edit this kit</a> to add parts first.
             </div>
           {% else %}
           <form method="post" action="/kits/{{ kit.id }}/build">
             <div class="row g-2">
               <div class="col-4">
-                <label class="form-label small">Kits to Build</label>
-                <input type="number" name="quantity" class="form-control" value="1" min="1"
-                       max="{{ max_buildable }}" required>
+                <label class="form-label">Kits to Build</label>
+                <input type="number" name="quantity" class="form-control" value="1" min="1" max="{{ max_buildable }}" required>
                 <div class="form-text">Max: {{ max_buildable }}</div>
               </div>
               <div class="col-4">
-                <label class="form-label small">Your Name</label>
+                <label class="form-label">Your Name <span style="color:var(--red)">*</span></label>
                 <input type="text" name="user_name" class="form-control" placeholder="Name" required>
               </div>
               <div class="col-4">
-                <label class="form-label small">Notes</label>
-                <input type="text" name="notes" class="form-control" placeholder="Optional">
+                <label class="form-label">Notes</label>
+                <input type="text" name="notes" class="form-control" placeholder="Batch label, etc.">
               </div>
             </div>
-            <button class="btn btn-success mt-3" type="submit"
-                    {% if max_buildable == 0 %}disabled{% endif %}>
-              <i class="bi bi-tools me-1"></i>Build Kit{{ 's' if max_buildable != 1 }}
+            <button class="btn btn-success mt-3" {% if max_buildable == 0 %}disabled{% endif %}>
+              <i class="bi bi-tools"></i> Build Kit{{ 's' if max_buildable != 1 }}
             </button>
           </form>
           {% endif %}
         </div>
         {% endif %}
 
-        <!-- Receive tab (vendor kits) -->
         {% if kit.kit_type == 'vendor' %}
-        <div class="tab-pane fade show active" id="tabReceive">
-          <p class="text-muted small mb-3">
-            Record incoming vendor-supplied kits. No component deduction — these arrive pre-assembled.
+        <div class="tab-pane show" id="tab-receive">
+          <p class="text-muted" style="font-size:13px;margin-bottom:14px">
+            Record incoming vendor kits. These arrive pre-assembled — no component deduction.
           </p>
           <form method="post" action="/kits/{{ kit.id }}/receive">
             <div class="row g-2">
               <div class="col-4">
-                <label class="form-label small">Quantity Received</label>
+                <label class="form-label">Quantity Received</label>
                 <input type="number" name="quantity" class="form-control" value="1" min="1" required>
               </div>
               <div class="col-4">
-                <label class="form-label small">Your Name</label>
+                <label class="form-label">Your Name <span style="color:var(--red)">*</span></label>
                 <input type="text" name="user_name" class="form-control" placeholder="Name" required>
               </div>
               <div class="col-4">
-                <label class="form-label small">Notes</label>
+                <label class="form-label">Notes</label>
                 <input type="text" name="notes" class="form-control" placeholder="PO#, batch, etc.">
               </div>
             </div>
-            <button class="btn btn-info mt-3" type="submit">
-              <i class="bi bi-truck me-1"></i>Receive Kits
-            </button>
+            <button class="btn btn-info mt-3"><i class="bi bi-truck"></i> Receive Kits</button>
           </form>
         </div>
         {% endif %}
 
-        <!-- Checkout tab -->
-        <div class="tab-pane fade" id="tabCheckout">
-          <p class="text-muted small mb-3">Issue kits from stock for use in a project or experiment.</p>
+        <div class="tab-pane" id="tab-kco">
+          <p class="text-muted" style="font-size:13px;margin-bottom:14px">Issue kits from stock for a project or experiment.</p>
           <form method="post" action="/kits/{{ kit.id }}/checkout">
             <div class="row g-2">
               <div class="col-3">
-                <label class="form-label small">Quantity</label>
-                <input type="number" name="quantity" class="form-control" value="1" min="1"
-                       max="{{ kit.quantity }}" required>
+                <label class="form-label">Quantity</label>
+                <input type="number" name="quantity" class="form-control" value="1" min="1" max="{{ kit.quantity }}" required>
               </div>
               <div class="col-3">
-                <label class="form-label small">Your Name</label>
+                <label class="form-label">Your Name <span style="color:var(--red)">*</span></label>
                 <input type="text" name="user_name" class="form-control" placeholder="Name" required>
               </div>
               <div class="col-3">
-                <label class="form-label small">Project</label>
+                <label class="form-label">Project</label>
                 <input type="text" name="project" class="form-control" placeholder="Optional">
               </div>
               <div class="col-3">
-                <label class="form-label small">Notes</label>
+                <label class="form-label">Notes</label>
                 <input type="text" name="notes" class="form-control" placeholder="Optional">
               </div>
             </div>
-            <button class="btn btn-warning mt-3" type="submit"
-                    {% if kit.quantity == 0 %}disabled{% endif %}>
-              <i class="bi bi-box-arrow-right me-1"></i>Check Out
+            <button class="btn btn-warning mt-3" {% if kit.quantity == 0 %}disabled{% endif %}>
+              <i class="bi bi-box-arrow-right"></i> Check Out
             </button>
           </form>
         </div>
 
-        <!-- Checkin tab -->
-        <div class="tab-pane fade" id="tabCheckin">
-          <p class="text-muted small mb-3">Return kits back to storage stock.</p>
+        <div class="tab-pane" id="tab-kci">
+          <p class="text-muted" style="font-size:13px;margin-bottom:14px">Return kits back to storage stock.</p>
           <form method="post" action="/kits/{{ kit.id }}/checkin">
             <div class="row g-2">
               <div class="col-3">
-                <label class="form-label small">Quantity</label>
+                <label class="form-label">Quantity</label>
                 <input type="number" name="quantity" class="form-control" value="1" min="1" required>
               </div>
               <div class="col-3">
-                <label class="form-label small">Your Name</label>
+                <label class="form-label">Your Name <span style="color:var(--red)">*</span></label>
                 <input type="text" name="user_name" class="form-control" placeholder="Name" required>
               </div>
               <div class="col-3">
-                <label class="form-label small">Project</label>
+                <label class="form-label">Project</label>
                 <input type="text" name="project" class="form-control" placeholder="Optional">
               </div>
               <div class="col-3">
-                <label class="form-label small">Notes</label>
+                <label class="form-label">Notes</label>
                 <input type="text" name="notes" class="form-control" placeholder="Optional">
               </div>
             </div>
-            <button class="btn btn-primary mt-3" type="submit">
-              <i class="bi bi-box-arrow-in-left me-1"></i>Return Kits
-            </button>
+            <button class="btn btn-primary mt-3"><i class="bi bi-box-arrow-in-left"></i> Return Kits</button>
           </form>
         </div>
 
@@ -283,44 +230,37 @@
 
     <!-- Components table -->
     {% if components %}
-    <div class="card mb-4">
-      <div class="card-header bg-white py-3 fw-semibold">
-        <i class="bi bi-list-ul me-2"></i>Components in This Kit
-        <span class="badge bg-secondary ms-2">{{ components|length }}</span>
+    <div class="card mb-3">
+      <div class="card-hd">
+        <span>Components in This Kit</span>
+        <span class="badge badge-neutral">{{ components|length }}</span>
       </div>
       <div class="table-responsive">
-        <table class="table table-sm align-middle mb-0">
-          <thead class="table-light">
+        <table class="table mb-0">
+          <thead>
             <tr>
               <th>Component</th>
               <th>Qty per Kit</th>
               <th>Current Stock</th>
-              <th>Reorder Threshold</th>
+              <th>Reorder At</th>
             </tr>
           </thead>
           <tbody>
             {% for comp in components %}
             <tr {% if comp.low_stock_threshold > 0 and comp.item_quantity <= comp.low_stock_threshold %}class="low-stock-row"{% endif %}>
-              <td>
-                <a href="/items/{{ comp.item_id }}" class="text-decoration-none">{{ comp.item_name }}</a>
-              </td>
+              <td><a href="/items/{{ comp.item_id }}" style="color:var(--text);font-weight:500">{{ comp.item_name }}</a></td>
               <td>{{ comp.quantity_per_kit }} {{ comp.item_unit }}</td>
               <td>
                 {% if comp.low_stock_threshold > 0 and comp.item_quantity <= comp.low_stock_threshold %}
-                  <span class="badge bg-danger qty-badge">{{ comp.item_quantity }} {{ comp.item_unit }}</span>
-                  <i class="bi bi-exclamation-triangle-fill text-danger ms-1" title="Low stock"></i>
+                  <span class="badge qty-warn">{{ comp.item_quantity }} {{ comp.item_unit }}</span>
                 {% elif comp.item_quantity == 0 %}
-                  <span class="badge bg-secondary qty-badge">0 {{ comp.item_unit }}</span>
+                  <span class="badge qty-zero">0 {{ comp.item_unit }}</span>
                 {% else %}
-                  <span class="badge bg-success qty-badge">{{ comp.item_quantity }} {{ comp.item_unit }}</span>
+                  <span class="badge qty-ok">{{ comp.item_quantity }} {{ comp.item_unit }}</span>
                 {% endif %}
               </td>
-              <td>
-                {% if comp.low_stock_threshold > 0 %}
-                  {{ comp.low_stock_threshold }} {{ comp.item_unit }}
-                {% else %}
-                  <span class="text-muted">—</span>
-                {% endif %}
+              <td style="color:var(--muted);font-size:13px">
+                {% if comp.low_stock_threshold > 0 %}{{ comp.low_stock_threshold }} {{ comp.item_unit }}{% else %}—{% endif %}
               </td>
             </tr>
             {% endfor %}
@@ -330,54 +270,41 @@
     </div>
     {% endif %}
 
-    <!-- Transaction history -->
+    <!-- Kit history -->
     <div class="card">
-      <div class="card-header bg-white py-3 fw-semibold">
-        <i class="bi bi-clock-history me-2"></i>Kit Transaction History
+      <div class="card-hd">
+        <span><i class="bi bi-clock-history me-2" style="color:var(--muted)"></i>Transaction History</span>
       </div>
       <div class="table-responsive">
-        <table class="table table-sm align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Time</th>
-              <th>Action</th>
-              <th>Change</th>
-              <th>Balance</th>
-              <th>User</th>
-              <th>Notes</th>
-            </tr>
+        <table class="table mb-0">
+          <thead>
+            <tr><th>Time</th><th>Action</th><th>Change</th><th>Balance</th><th>User</th><th>Notes</th></tr>
           </thead>
           <tbody>
             {% if history %}
               {% for t in history %}
               <tr>
-                <td class="text-muted small">{{ t.timestamp[:16] }}</td>
+                <td style="color:var(--muted);font-size:12px;white-space:nowrap">{{ t.timestamp[:16] }}</td>
                 <td>
                   <span class="badge badge-action-{{ t.action }}">
                     {% if t.action == 'build' %}Build
                     {% elif t.action == 'receive_vendor' %}Received
                     {% elif t.action == 'checkout' %}Checkout
                     {% elif t.action == 'checkin' %}Return
-                    {% else %}{{ t.action }}
-                    {% endif %}
+                    {% else %}{{ t.action }}{% endif %}
                   </span>
                 </td>
                 <td>
-                  {% if t.quantity_change > 0 %}
-                    <span class="text-success">+{{ t.quantity_change }}</span>
-                  {% else %}
-                    <span class="text-danger">{{ t.quantity_change }}</span>
-                  {% endif %}
+                  {% if t.quantity_change > 0 %}<span style="color:var(--green);font-weight:600">+{{ t.quantity_change }}</span>
+                  {% else %}<span style="color:var(--red);font-weight:600">{{ t.quantity_change }}</span>{% endif %}
                 </td>
                 <td>{{ t.quantity_after }}</td>
-                <td class="small">{{ t.user_name }}{% if t.project %} / {{ t.project }}{% endif %}</td>
-                <td class="small text-muted">{{ t.notes or '—' }}</td>
+                <td style="font-size:13px">{{ t.user_name }}{% if t.project %} · <span class="text-muted">{{ t.project }}</span>{% endif %}</td>
+                <td style="font-size:12px;color:var(--muted)">{{ t.notes or '—' }}</td>
               </tr>
               {% endfor %}
             {% else %}
-              <tr>
-                <td colspan="6" class="text-center text-muted py-4">No transactions yet.</td>
-              </tr>
+              <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted)">No transactions yet.</td></tr>
             {% endif %}
           </tbody>
         </table>

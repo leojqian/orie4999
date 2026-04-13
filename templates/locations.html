@@ -2,22 +2,22 @@
 {% block title %}Locations{% endblock %}
 
 {% block content %}
-<div class="mt-4 mb-3">
-  <h4 class="mb-0 fw-bold"><i class="bi bi-geo-alt me-2 text-primary"></i>Locations</h4>
+<div class="pg-header">
+  <h1 class="pg-title">Locations</h1>
 </div>
 
-<div class="row g-4">
+<div class="row g-3">
   <div class="col-12 col-md-5 col-lg-4">
     <div class="card">
-      <div class="card-header bg-white py-3"><span class="fw-semibold">Add Location</span></div>
-      <div class="card-body">
+      <div class="card-hd">Add Location</div>
+      <div class="card-bd">
         <form method="post">
           <div class="mb-3">
-            <label class="form-label small text-muted">Location Name</label>
+            <label class="form-label">Location Name</label>
             <input type="text" name="name" class="form-control" placeholder="e.g. Row 2" required>
           </div>
           <div class="mb-3">
-            <label class="form-label small text-muted">Parent Location <span class="text-muted">(optional)</span></label>
+            <label class="form-label">Parent Location <span class="text-muted" style="font-weight:400">(optional)</span></label>
             <select name="parent_id" class="form-select">
               <option value="">— None (top level) —</option>
               {% for loc in locations %}
@@ -26,9 +26,11 @@
                 {% endif %}
               {% endfor %}
             </select>
-            <div class="form-text">Select a parent to create a nested location (e.g. Shelf A → Row 2).</div>
+            <div class="form-text">Creates a nested location, e.g. Shelf A → Row 2.</div>
           </div>
-          <button class="btn btn-primary w-100" type="submit"><i class="bi bi-plus-lg me-1"></i>Add Location</button>
+          <button class="btn btn-primary" style="width:100%" type="submit">
+            <i class="bi bi-plus-lg"></i> Add Location
+          </button>
         </form>
       </div>
     </div>
@@ -36,41 +38,40 @@
 
   <div class="col-12 col-md-7 col-lg-8">
     <div class="card">
-      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-        <span class="fw-semibold">All Locations</span>
-        <span class="badge bg-secondary rounded-pill">{{ locations|length }}</span>
+      <div class="card-hd">
+        <span>All Locations</span>
+        <span class="badge badge-neutral">{{ locations|length }}</span>
       </div>
-      <ul class="list-group list-group-flush">
+      <ul class="list-group-flush">
         {% if locations %}
-          {% set ns = namespace(last_parent=None) %}
           {% for loc in locations %}
-            {% if not loc.parent_id %}
-              {# Top-level location #}
-              {% set ns.last_parent = loc.name %}
-              <li class="list-group-item d-flex justify-content-between align-items-center">
-                <span class="fw-semibold"><i class="bi bi-geo me-2 text-primary"></i>{{ loc.name }}</span>
-                <form method="post" action="/locations/{{ loc.id }}/delete"
-                      onsubmit="return confirm('Delete location \'{{ loc.name }}\'?');">
-                  <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                </form>
-              </li>
-            {% else %}
-              {# Child location #}
-              <li class="list-group-item d-flex justify-content-between align-items-center ps-4" style="border-left: 3px solid #dee2e6;">
-                <span class="text-muted small">
-                  <i class="bi bi-arrow-return-right me-1"></i>
-                  <span class="text-dark">{{ loc.name }}</span>
-                  <span class="ms-1 badge bg-light text-muted border" style="font-size:.7rem;">under {{ loc.parent_name }}</span>
-                </span>
-                <form method="post" action="/locations/{{ loc.id }}/delete"
-                      onsubmit="return confirm('Delete location \'{{ loc.name }}\'?');">
-                  <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                </form>
-              </li>
-            {% endif %}
+          {% if not loc.parent_id %}
+          <li class="list-group-item">
+            <div style="display:flex;align-items:center;gap:8px">
+              <i class="bi bi-geo-fill" style="color:var(--blue)"></i>
+              <span style="font-weight:600">{{ loc.name }}</span>
+            </div>
+            <form method="post" action="/locations/{{ loc.id }}/delete"
+                  onsubmit="return confirm('Delete \'{{ loc.name }}\'?');">
+              <button class="btn btn-ghost btn-sm" style="color:var(--red)"><i class="bi bi-trash"></i></button>
+            </form>
+          </li>
+          {% else %}
+          <li class="list-group-item" style="padding-left:36px;background:#fafbfc">
+            <div style="display:flex;align-items:center;gap:8px">
+              <i class="bi bi-arrow-return-right" style="color:var(--muted);font-size:12px"></i>
+              <span>{{ loc.name }}</span>
+              <span style="font-size:11px;background:var(--blue-light);color:var(--blue);padding:2px 7px;border-radius:10px;font-weight:500">{{ loc.parent_name }}</span>
+            </div>
+            <form method="post" action="/locations/{{ loc.id }}/delete"
+                  onsubmit="return confirm('Delete \'{{ loc.name }}\'?');">
+              <button class="btn btn-ghost btn-sm" style="color:var(--red)"><i class="bi bi-trash"></i></button>
+            </form>
+          </li>
+          {% endif %}
           {% endfor %}
         {% else %}
-          <li class="list-group-item text-muted text-center py-4">No locations yet.</li>
+          <li class="list-group-item" style="justify-content:center;color:var(--muted)">No locations yet.</li>
         {% endif %}
       </ul>
     </div>

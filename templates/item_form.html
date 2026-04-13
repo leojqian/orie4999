@@ -2,117 +2,112 @@
 {% block title %}{% if item %}Edit {{ item.name }}{% else %}Add Item{% endif %}{% endblock %}
 
 {% block content %}
-<div class="mt-4 mb-3">
-  <a href="{% if item %}/items/{{ item.id }}{% else %}/items{% endif %}" class="text-decoration-none text-muted small">
-    <i class="bi bi-arrow-left me-1"></i>Back
-  </a>
+<div class="pg-header">
+  <div class="pg-title-row">
+    <a href="{% if item %}/items/{{ item.id }}{% else %}/items{% endif %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <h1 class="pg-title">{% if item %}Edit "{{ item.name }}"{% else %}Add New Item{% endif %}</h1>
+  </div>
 </div>
 
-<div class="row justify-content-center">
-  <div class="col-12 col-lg-8">
+<div class="row justify-content-start">
+  <div class="col-12 col-lg-8 col-xl-7">
     <div class="card">
-      <div class="card-header bg-white py-3">
-        <h5 class="mb-0 fw-bold">
-          <i class="bi bi-{% if item %}pencil{% else %}plus-circle{% endif %} me-2 text-primary"></i>
-          {% if item %}Edit "{{ item.name }}"{% else %}Add New Item{% endif %}
-        </h5>
-      </div>
-      <div class="card-body">
+      <div class="card-bd">
         <form method="post">
           <div class="row g-3">
 
             <div class="col-12 col-md-8">
-              <label class="form-label fw-semibold">Item Name <span class="text-danger">*</span></label>
+              <label class="form-label">Item Name <span style="color:var(--red)">*</span></label>
               <input type="text" name="name" class="form-control" required
                      value="{{ item.name if item else '' }}" placeholder="e.g. M3 Hex Bolts">
             </div>
 
             <div class="col-12 col-md-4">
-              <label class="form-label fw-semibold">Category</label>
+              <label class="form-label">Category</label>
               <select name="category_id" class="form-select">
                 <option value="">— None —</option>
                 {% for cat in categories %}
-                <option value="{{ cat.id }}"
-                  {% if item and item.category_id == cat.id %}selected{% endif %}>
-                  {{ cat.name }}
-                </option>
+                <option value="{{ cat.id }}" {% if item and item.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
                 {% endfor %}
               </select>
             </div>
 
             {% if not item %}
             <div class="col-6 col-md-4">
-              <label class="form-label fw-semibold">Initial Quantity</label>
+              <label class="form-label">Initial Quantity</label>
               <input type="number" name="quantity" class="form-control" value="0" min="0" step="any">
             </div>
             <div class="col-6 col-md-4">
-              <label class="form-label fw-semibold">Your Name</label>
+              <label class="form-label">Your Name</label>
               <input type="text" name="user_name" class="form-control" placeholder="Who is adding this?">
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">Unit</label>
+              <input type="text" name="unit" class="form-control" value="units"
+                     placeholder="units, pcs, g, m…" list="unit-opts">
+              <datalist id="unit-opts">
+                <option value="units"><option value="pcs"><option value="g">
+                <option value="kg"><option value="m"><option value="cm">
+                <option value="mL"><option value="L"><option value="bags">
+              </datalist>
+            </div>
+            {% else %}
+            <div class="col-6 col-md-4">
+              <label class="form-label">Unit</label>
+              <input type="text" name="unit" class="form-control"
+                     value="{{ item.unit }}" placeholder="units, pcs, g…" list="unit-opts">
+              <datalist id="unit-opts">
+                <option value="units"><option value="pcs"><option value="g">
+                <option value="kg"><option value="m"><option value="cm">
+                <option value="mL"><option value="L"><option value="bags">
+              </datalist>
             </div>
             {% endif %}
 
-            <div class="col-6 col-md-{% if item %}4{% else %}4{% endif %}">
-              <label class="form-label fw-semibold">Unit</label>
-              <input type="text" name="unit" class="form-control"
-                     value="{{ item.unit if item else 'units' }}"
-                     placeholder="units, pcs, g, m…" list="unit-suggestions">
-              <datalist id="unit-suggestions">
-                <option value="units">
-                <option value="pcs">
-                <option value="g">
-                <option value="kg">
-                <option value="m">
-                <option value="cm">
-                <option value="mL">
-                <option value="L">
-                <option value="ft">
-              </datalist>
-            </div>
-
             <div class="col-6 col-md-4">
-              <label class="form-label fw-semibold">Location</label>
+              <label class="form-label">Location</label>
               <select name="location_id" class="form-select">
                 <option value="">— None —</option>
                 {% for loc in locations %}
-                <option value="{{ loc.id }}"
-                  {% if item and item.location_id == loc.id %}selected{% endif %}>
-                  {{ loc.name }}
-                </option>
+                <option value="{{ loc.id }}" {% if item and item.location_id == loc.id %}selected{% endif %}>{{ loc.name }}</option>
                 {% endfor %}
               </select>
             </div>
 
             <div class="col-6 col-md-4">
-              <label class="form-label fw-semibold">Low-Stock Alert At</label>
+              <label class="form-label">Low-Stock Alert At</label>
               <div class="input-group">
-                <input type="number" name="low_stock_threshold" class="form-control" min="0" step="any"
-                       value="{{ item.low_stock_threshold if item else 0 }}">
-                <span class="input-group-text text-muted">{{ item.unit if item else 'units' }}</span>
+                <input type="number" name="low_stock_threshold" class="form-control"
+                       min="0" step="any" value="{{ item.low_stock_threshold if item else 0 }}">
+                <span class="input-group-text">{{ item.unit if item else 'units' }}</span>
               </div>
-              <div class="form-text">Set to 0 to disable alerts.</div>
+              <div class="form-text">Set to 0 to disable.</div>
             </div>
 
             <div class="col-12 col-md-6">
-              <label class="form-label fw-semibold">Supplier</label>
+              <label class="form-label">Supplier</label>
               <input type="text" name="supplier" class="form-control"
                      value="{{ item.supplier if item else '' }}" placeholder="e.g. McMaster-Carr">
             </div>
 
             <div class="col-12 col-md-6">
-              <label class="form-label fw-semibold">SKU / Part Number</label>
-              <input type="text" name="sku" class="form-control font-monospace"
-                     value="{{ item.sku if item else '' }}" placeholder="e.g. 91290A117">
+              <label class="form-label">SKU / Part Number</label>
+              <input type="text" name="sku" class="form-control"
+                     value="{{ item.sku if item else '' }}" placeholder="e.g. 91290A117"
+                     style="font-family:monospace">
             </div>
 
             <div class="col-12">
-              <label class="form-label fw-semibold">Notes</label>
+              <label class="form-label">Notes</label>
               <textarea name="notes" class="form-control" rows="2"
                         placeholder="Any additional details…">{{ item.notes if item else '' }}</textarea>
             </div>
 
-            <div class="col-12 d-flex gap-2 pt-1">
+            <div class="col-12" style="display:flex;gap:8px;padding-top:4px">
               <button type="submit" class="btn btn-primary">
-                <i class="bi bi-{% if item %}check-lg{% else %}plus-lg{% endif %} me-1"></i>
+                <i class="bi bi-{% if item %}check-lg{% else %}plus-lg{% endif %}"></i>
                 {% if item %}Save Changes{% else %}Add Item{% endif %}
               </button>
               <a href="{% if item %}/items/{{ item.id }}{% else %}/items{% endif %}"

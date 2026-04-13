@@ -2,20 +2,18 @@
 {% block title %}Inventory{% endblock %}
 
 {% block content %}
-<div class="d-flex align-items-center justify-content-between mt-4 mb-3">
-  <h4 class="mb-0 fw-bold"><i class="bi bi-grid me-2 text-primary"></i>Inventory</h4>
-  <a href="/items/new" class="btn btn-primary btn-sm no-print">
-    <i class="bi bi-plus-lg me-1"></i>Add Item
-  </a>
+<div class="pg-header">
+  <h1 class="pg-title">Inventory</h1>
+  <a href="/items/new" class="btn btn-primary no-print"><i class="bi bi-plus-lg"></i>Add Item</a>
 </div>
 
-<!-- Search & filter -->
+<!-- Search & filters -->
 <div class="card mb-3 no-print">
-  <div class="card-body py-3">
+  <div class="card-bd" style="padding:14px 18px;">
     <form method="get" action="/items">
-      <div class="row g-2 align-items-end">
+      <div class="row g-2 align-items-center">
         <div class="col-12 col-md-5">
-          <div class="input-group search-bar">
+          <div class="input-group">
             <input type="text" name="q" class="form-control" placeholder="Search by name, SKU, notes…" value="{{ q }}">
             <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button>
           </div>
@@ -38,7 +36,7 @@
         </div>
         {% if q or selected_category or selected_location %}
         <div class="col-auto">
-          <a href="/items" class="btn btn-outline-secondary"><i class="bi bi-x-lg"></i> Clear</a>
+          <a href="/items" class="btn btn-outline-secondary"><i class="bi bi-x-lg"></i></a>
         </div>
         {% endif %}
       </div>
@@ -46,24 +44,21 @@
   </div>
 </div>
 
-<!-- Results count -->
-<div class="text-muted small mb-2">
-  {{ items|length }} item{{ 's' if items|length != 1 else '' }} found
-  {% if q or selected_category or selected_location %} (filtered){% endif %}
+<div class="text-muted mb-2" style="font-size:13px">
+  {{ items|length }} item{{ 's' if items|length != 1 else '' }}{% if q or selected_category or selected_location %} (filtered){% endif %}
 </div>
 
-<!-- Item table -->
 <div class="card">
   <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0">
-      <thead class="table-light">
+    <table class="table mb-0">
+      <thead>
         <tr>
           <th>Item</th>
           <th>Category</th>
-          <th>Quantity</th>
+          <th>Stock</th>
           <th>Location</th>
           <th>SKU / Supplier</th>
-          <th class="no-print">Actions</th>
+          <th class="no-print" style="width:110px"></th>
         </tr>
       </thead>
       <tbody>
@@ -71,58 +66,54 @@
           {% for item in items %}
           <tr {% if item.low_stock_threshold > 0 and item.quantity <= item.low_stock_threshold %}class="low-stock-row"{% endif %}>
             <td>
-              <a href="/items/{{ item.id }}" class="text-decoration-none fw-semibold">{{ item.name }}</a>
+              <a href="/items/{{ item.id }}" class="fw-semibold" style="color:var(--text)">{{ item.name }}</a>
               {% if item.low_stock_threshold > 0 and item.quantity <= item.low_stock_threshold %}
-                <span class="badge bg-danger ms-1" title="Low stock"><i class="bi bi-exclamation-triangle-fill"></i></span>
+                <span class="badge badge-red ms-1" style="font-size:11px"><i class="bi bi-exclamation-triangle-fill"></i> Low</span>
               {% endif %}
               {% if item.notes %}
-                <br><small class="text-muted">{{ item.notes[:60] }}{% if item.notes|length > 60 %}…{% endif %}</small>
+                <div class="text-muted" style="font-size:12px;margin-top:2px">{{ item.notes[:70] }}{% if item.notes|length > 70 %}…{% endif %}</div>
               {% endif %}
             </td>
             <td>
               {% if item.category_name %}
-                <span class="badge bg-light text-dark border">{{ item.category_name }}</span>
+                <span class="badge badge-category">{{ item.category_name }}</span>
               {% else %}
                 <span class="text-muted">—</span>
               {% endif %}
             </td>
             <td>
               {% if item.low_stock_threshold > 0 and item.quantity <= item.low_stock_threshold %}
-                <span class="badge bg-danger qty-badge">{{ item.quantity }} {{ item.unit }}</span>
+                <span class="badge qty-warn">{{ item.quantity }} {{ item.unit }}</span>
               {% elif item.quantity == 0 %}
-                <span class="badge bg-secondary qty-badge">0 {{ item.unit }}</span>
+                <span class="badge qty-zero">0 {{ item.unit }}</span>
               {% else %}
-                <span class="badge bg-success qty-badge">{{ item.quantity }} {{ item.unit }}</span>
+                <span class="badge qty-ok">{{ item.quantity }} {{ item.unit }}</span>
               {% endif %}
               {% if item.low_stock_threshold > 0 %}
-                <br><small class="text-muted">min: {{ item.low_stock_threshold }}</small>
+                <div class="text-muted" style="font-size:11px;margin-top:2px">min {{ item.low_stock_threshold }}</div>
               {% endif %}
             </td>
-            <td>{{ item.location_name or '—' }}</td>
+            <td style="color:var(--muted)">{{ item.location_name or '—' }}</td>
             <td>
-              {% if item.sku %}<small class="text-muted d-block">SKU: {{ item.sku }}</small>{% endif %}
-              {% if item.supplier %}<small class="text-muted">{{ item.supplier }}</small>{% endif %}
-              {% if not item.sku and not item.supplier %}—{% endif %}
+              {% if item.sku %}<div style="font-size:12px;color:var(--muted)">SKU: <code>{{ item.sku }}</code></div>{% endif %}
+              {% if item.supplier %}<div style="font-size:12px;color:var(--muted)">{{ item.supplier }}</div>{% endif %}
+              {% if not item.sku and not item.supplier %}<span class="text-muted">—</span>{% endif %}
             </td>
             <td class="no-print">
-              <a href="/items/{{ item.id }}" class="btn btn-sm btn-outline-secondary me-1" title="View">
-                <i class="bi bi-eye"></i>
-              </a>
-              <a href="/items/{{ item.id }}/edit" class="btn btn-sm btn-outline-primary me-1" title="Edit">
-                <i class="bi bi-pencil"></i>
-              </a>
-              <a href="/items/{{ item.id }}/qr" target="_blank" class="btn btn-sm btn-outline-dark" title="QR Code">
-                <i class="bi bi-qr-code"></i>
-              </a>
+              <div style="display:flex;gap:4px">
+                <a href="/items/{{ item.id }}" class="btn btn-ghost btn-sm" title="View"><i class="bi bi-eye"></i></a>
+                <a href="/items/{{ item.id }}/edit" class="btn btn-ghost btn-sm" title="Edit"><i class="bi bi-pencil"></i></a>
+                <a href="/items/{{ item.id }}/qr" target="_blank" class="btn btn-ghost btn-sm" title="QR Code"><i class="bi bi-qr-code"></i></a>
+              </div>
             </td>
           </tr>
           {% endfor %}
         {% else %}
           <tr>
-            <td colspan="6" class="text-center text-muted py-5">
-              <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-              No items found.
-              <a href="/items/new">Add the first one.</a>
+            <td colspan="6" style="text-align:center;padding:48px 16px;color:var(--muted)">
+              <i class="bi bi-box-seam" style="font-size:36px;display:block;margin-bottom:10px;opacity:.4"></i>
+              <div class="fw-semibold" style="margin-bottom:4px">No items found</div>
+              <a href="/items/new" class="btn btn-primary btn-sm mt-2"><i class="bi bi-plus-lg"></i>Add the first item</a>
             </td>
           </tr>
         {% endif %}

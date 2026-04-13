@@ -3,104 +3,486 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Lab Inventory{% endblock %} — LabInv</title>
+  <title>{% block title %}LabInv{% endblock %}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <style>
-    body { background: #f5f7fa; }
-    .navbar-brand span { color: #0d6efd; font-weight: 700; }
-    .sidebar-link.active { background: #e8f0fe; border-radius: 6px; color: #0d6efd !important; font-weight: 600; }
-    .card { border: none; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
-    .stat-card { border-left: 4px solid; }
-    .stat-card.blue   { border-color: #0d6efd; }
-    .stat-card.green  { border-color: #198754; }
-    .stat-card.orange { border-color: #fd7e14; }
-    .stat-card.red    { border-color: #dc3545; }
-    .badge-action-checkout { background:#ffc107; color:#000; }
-    .badge-action-checkin  { background:#198754; color:#fff; }
-    .badge-action-restock  { background:#0d6efd; color:#fff; }
-    .badge-action-add          { background:#6f42c1; color:#fff; }
-    .badge-action-build        { background:#20c997; color:#fff; }
-    .badge-action-receive_vendor { background:#0dcaf0; color:#000; }
-    .badge-action-kit_build    { background:#20c997; color:#fff; }
-    .low-stock-row { background:#fff3cd; }
-    .qty-badge { font-size:.85rem; padding:.3em .6em; }
-    .table th { font-size:.8rem; text-transform:uppercase; letter-spacing:.05em; color:#6c757d; }
-    .action-icon { font-size:1rem; cursor:pointer; }
-    .search-bar .form-control { border-radius: 8px 0 0 8px; }
-    .search-bar .btn { border-radius: 0 8px 8px 0; }
+    :root {
+      --sidebar-w: 224px;
+      --sidebar-bg: #1a1d21;
+      --sidebar-hover: rgba(255,255,255,0.07);
+      --sidebar-active: rgba(255,255,255,0.13);
+      --sidebar-text: #c9cdd4;
+      --sidebar-dim: #6b7280;
+      --blue: #0a66c2;
+      --blue-hover: #0958a8;
+      --blue-light: #e8f0fb;
+      --green: #2eb67d;
+      --green-light: #e6f6ee;
+      --amber: #e8a014;
+      --amber-light: #fef3dc;
+      --red: #d9534f;
+      --red-light: #fceaea;
+      --teal: #0d9488;
+      --teal-light: #e0f2f1;
+      --purple: #7c3aed;
+      --purple-light: #f0ebff;
+      --bg: #f4f5f7;
+      --border: #e2e5e8;
+      --text: #1d1c1d;
+      --muted: #5e6773;
+      --card-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ─── Sidebar ─── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--sidebar-bg);
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      z-index: 200;
+    }
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 18px 16px 16px;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      flex-shrink: 0;
+    }
+    .brand-icon {
+      width: 34px; height: 34px;
+      background: var(--blue);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 17px; flex-shrink: 0;
+    }
+    .brand-name { color: white; font-weight: 700; font-size: 16px; letter-spacing: -.3px; }
+    .brand-sub  { color: var(--sidebar-dim); font-size: 11px; margin-top: 1px; }
+
+    .sidebar-nav { padding: 12px 8px; flex: 1; }
+    .sidebar-group-label {
+      color: var(--sidebar-dim);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      padding: 10px 8px 4px;
+    }
+    .s-link {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 8px;
+      border-radius: 7px;
+      color: var(--sidebar-text);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 1px;
+      transition: background .1s;
+    }
+    .s-link i { font-size: 16px; flex-shrink: 0; width: 18px; text-align: center; }
+    .s-link:hover { background: var(--sidebar-hover); color: white; }
+    .s-link.active { background: var(--sidebar-active); color: white; }
+    .s-link .s-badge {
+      margin-left: auto;
+      background: var(--red);
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 10px;
+    }
+    .sidebar-divider { border: none; border-top: 1px solid rgba(255,255,255,0.07); margin: 4px 8px 8px; }
+    .sidebar-footer { padding: 12px 8px 16px; }
+    .sidebar-cta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      background: var(--blue);
+      color: white;
+      border-radius: 7px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background .1s;
+    }
+    .sidebar-cta:hover { background: var(--blue-hover); color: white; }
+
+    /* ─── Main ─── */
+    .main-wrap {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .flash-zone { padding: 12px 28px 0; }
+    .flash-msg {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 11px 14px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+    .flash-success { background: var(--green-light); color: #1a5c3a; border: 1px solid #b7e6d1; }
+    .flash-danger  { background: var(--red-light);   color: #8b1a1a; border: 1px solid #f5c5c5; }
+    .page { padding: 28px 28px 48px; }
+
+    /* ─── Page header ─── */
+    .pg-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 22px;
+      gap: 12px;
+    }
+    .pg-title {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0;
+    }
+    .pg-title-row { display: flex; align-items: center; gap: 10px; }
+
+    /* ─── Cards ─── */
+    .card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: var(--card-shadow);
+    }
+    .card-hd {
+      padding: 13px 18px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-radius: 10px 10px 0 0;
+    }
+    .card-bd { padding: 18px; }
+
+    /* Stat cards */
+    .stat-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: var(--card-shadow);
+      padding: 18px 20px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+    .stat-val { font-size: 30px; font-weight: 700; line-height: 1.1; }
+    .stat-lbl { font-size: 12px; font-weight: 500; color: var(--muted); margin-top: 3px; }
+    .stat-ico {
+      width: 38px; height: 38px;
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 19px;
+      flex-shrink: 0;
+    }
+
+    /* Quick-action tiles */
+    .qa-tile {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: var(--card-shadow);
+      padding: 16px 18px;
+      text-decoration: none;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .qa-tile:hover {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(10,102,194,.08), var(--card-shadow);
+      color: var(--text);
+    }
+    .qa-ico {
+      width: 36px; height: 36px;
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    .qa-title { font-weight: 600; font-size: 13.5px; margin-bottom: 2px; }
+    .qa-desc  { font-size: 12px; color: var(--muted); }
+
+    /* ─── Buttons ─── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      font-size: 13.5px;
+      font-weight: 500;
+      border-radius: 7px;
+      border: 1.5px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background .12s, box-shadow .12s, border-color .12s;
+      line-height: 1.4;
+    }
+    .btn-sm  { padding: 5px 10px; font-size: 12.5px; }
+    .btn-primary    { background: var(--blue);  color: white; }
+    .btn-primary:hover { background: var(--blue-hover); color: white; }
+    .btn-success    { background: var(--green); color: white; }
+    .btn-success:hover { background: #27a570; color: white; }
+    .btn-warning    { background: var(--amber); color: white; }
+    .btn-warning:hover { background: #d09010; color: white; }
+    .btn-danger     { background: var(--red);  color: white; }
+    .btn-info       { background: #0ea5e9; color: white; }
+    .btn-info:hover { background: #0284c7; color: white; }
+    .btn-outline-primary  { background: transparent; border-color: var(--blue);   color: var(--blue); }
+    .btn-outline-primary:hover  { background: var(--blue-light); color: var(--blue); }
+    .btn-outline-secondary{ background: transparent; border-color: var(--border);  color: var(--muted); }
+    .btn-outline-secondary:hover{ background: var(--bg); color: var(--text); }
+    .btn-outline-danger   { background: transparent; border-color: #f5c5c5; color: var(--red); }
+    .btn-outline-danger:hover   { background: var(--red-light); color: var(--red); }
+    .btn-ghost { background: transparent; border-color: transparent; color: var(--muted); padding: 5px 8px; }
+    .btn-ghost:hover { background: var(--bg); color: var(--text); }
+
+    /* ─── Tables ─── */
+    .table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .table thead th {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      background: #fafbfc;
+      white-space: nowrap;
+    }
+    .table tbody td {
+      padding: 11px 16px;
+      border-bottom: 1px solid #f0f2f4;
+      vertical-align: middle;
+    }
+    .table tbody tr:last-child td { border-bottom: none; }
+    .table tbody tr:hover td { background: #f8f9fb; }
+    .table-responsive { border-radius: 0 0 10px 10px; overflow: hidden; }
+    .low-stock-row td { background: #fffbf2 !important; }
+    .low-stock-row:hover td { background: #fff6e6 !important; }
+
+    /* ─── Badges ─── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+    .badge-action-checkout  { background: var(--amber-light); color: #92520a; }
+    .badge-action-checkin   { background: var(--green-light); color: #1a5c3a; }
+    .badge-action-restock   { background: var(--blue-light);  color: #0a3d7a; }
+    .badge-action-add       { background: var(--purple-light);color: #4c1d95; }
+    .badge-action-kit_build { background: var(--teal-light);  color: #0d5c56; }
+    .badge-action-build     { background: var(--teal-light);  color: #0d5c56; }
+    .badge-action-receive_vendor { background: var(--blue-light); color: #0a3d7a; }
+    .badge-blue    { background: var(--blue-light);   color: var(--blue); }
+    .badge-green   { background: var(--green-light);  color: #1a5c3a; }
+    .badge-amber   { background: var(--amber-light);  color: #92520a; }
+    .badge-red     { background: var(--red-light);    color: #8b1a1a; }
+    .badge-purple  { background: var(--purple-light); color: #4c1d95; }
+    .badge-teal    { background: var(--teal-light);   color: #0d5c56; }
+    .badge-neutral { background: #f1f2f4; color: var(--muted); }
+    .badge-category{ background: #f0f4ff; color: #3730a3; border: 1px solid #e0e7ff; }
+    .qty-ok   { background: var(--green-light); color: #1a5c3a; font-weight: 600; font-size: 13px; padding: 4px 10px; }
+    .qty-warn { background: var(--red-light);   color: #8b1a1a; font-weight: 600; font-size: 13px; padding: 4px 10px; }
+    .qty-zero { background: #f1f2f4; color: var(--muted); font-weight: 600; font-size: 13px; padding: 4px 10px; }
+
+    /* ─── Forms ─── */
+    .form-control, .form-select {
+      display: block;
+      width: 100%;
+      padding: 8px 11px;
+      font-size: 14px;
+      line-height: 1.4;
+      color: var(--text);
+      background: white;
+      border: 1.5px solid #d1d5db;
+      border-radius: 7px;
+      transition: border-color .15s, box-shadow .15s;
+      font-family: inherit;
+    }
+    .form-control:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(10,102,194,.1);
+    }
+    .form-label { display: block; font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 5px; }
+    .form-text  { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    textarea.form-control { resize: vertical; }
+    .input-group { display: flex; }
+    .input-group .form-control { border-radius: 7px 0 0 7px; flex: 1; }
+    .input-group .btn { border-radius: 0 7px 7px 0; }
+    .input-group-text {
+      padding: 8px 11px;
+      background: #f4f5f7;
+      border: 1.5px solid #d1d5db;
+      border-left: none;
+      border-radius: 0 7px 7px 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .form-check-input:checked { background-color: var(--blue); border-color: var(--blue); }
+
+    /* ─── Nav tabs ─── */
+    .nav-tabs {
+      display: flex;
+      border-bottom: 2px solid var(--border);
+      gap: 0;
+      padding: 0 4px;
+      margin: 0;
+      list-style: none;
+    }
+    .nav-tabs .nav-link, .nav-tabs a {
+      display: block;
+      padding: 9px 14px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      border-radius: 0;
+      cursor: pointer;
+      background: transparent;
+      transition: color .12s;
+    }
+    .nav-tabs .nav-link:hover, .nav-tabs a:hover { color: var(--text); }
+    .nav-tabs .nav-link.active, .nav-tabs a.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
+    .tab-content > .tab-pane { display: none; }
+    .tab-content > .tab-pane.show { display: block; }
+
+    /* ─── List groups ─── */
+    .list-group-flush { list-style: none; padding: 0; margin: 0; }
+    .list-group-item {
+      padding: 11px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
+    }
+    .list-group-item:last-child { border-bottom: none; }
+
+    /* ─── Alert ─── */
+    .alert { padding: 12px 14px; border-radius: 8px; font-size: 13.5px; border: 1px solid; }
+    .alert-warning { background: var(--amber-light); border-color: #f6d860; color: #7a4600; }
+    .alert-danger  { background: var(--red-light);   border-color: #f5c5c5; color: #8b1a1a; }
+
+    /* ─── Misc ─── */
+    code { font-size: 13px; background: #f4f5f7; padding: 1px 5px; border-radius: 4px; color: var(--purple); font-family: 'SF Mono', 'Fira Code', monospace; }
+    .text-muted { color: var(--muted) !important; }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { color: var(--blue-hover); }
+    hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+    .fw-semibold { font-weight: 600; }
+    .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 10px; }
+
     @media print { .no-print { display: none !important; } }
+    @media (max-width: 768px) {
+      .sidebar { width: 58px; }
+      .brand-name, .brand-sub, .s-link span, .sidebar-group-label, .sidebar-cta span { display: none; }
+      .sidebar-cta { justify-content: center; }
+      .main-wrap { margin-left: 58px; }
+      .page { padding: 16px 14px 40px; }
+      .flash-zone { padding: 10px 14px 0; }
+    }
   </style>
 </head>
 <body>
 
-<!-- Top navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark no-print">
-  <div class="container-fluid px-4">
-    <a class="navbar-brand" href="/">
-      <i class="bi bi-boxes me-1"></i><span>LabInv</span>
-    </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarMain">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item">
-          <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="/">
-            <i class="bi bi-speedometer2 me-1"></i>Dashboard
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link {% if request.endpoint in ('items','item_detail','new_item','edit_item') %}active{% endif %}" href="/items">
-            <i class="bi bi-grid me-1"></i>Inventory
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link {% if request.endpoint in ('kits','kit_detail','new_kit','edit_kit') %}active{% endif %}" href="/kits">
-            <i class="bi bi-collection me-1"></i>Kits
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link {% if request.endpoint == 'transactions' %}active{% endif %}" href="/transactions">
-            <i class="bi bi-clock-history me-1"></i>Transactions
-          </a>
-        </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle {% if request.endpoint in ('categories','locations') %}active{% endif %}"
-             href="#" data-bs-toggle="dropdown">
-            <i class="bi bi-gear me-1"></i>Settings
-          </a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="/categories"><i class="bi bi-tags me-2"></i>Categories</a></li>
-            <li><a class="dropdown-item" href="/locations"><i class="bi bi-geo-alt me-2"></i>Locations</a></li>
-          </ul>
-        </li>
-      </ul>
-      <a href="/items/new" class="btn btn-primary btn-sm">
-        <i class="bi bi-plus-lg me-1"></i>Add Item
-      </a>
+<aside class="sidebar no-print">
+  <a class="sidebar-brand" href="/">
+    <div class="brand-icon"><i class="bi bi-boxes"></i></div>
+    <div>
+      <div class="brand-name">LabInv</div>
+      <div class="brand-sub">Inventory System</div>
     </div>
-  </div>
-</nav>
+  </a>
 
-<!-- Flash messages -->
-<div class="container-fluid px-4 mt-3 no-print">
+  <nav class="sidebar-nav">
+    <a href="/" class="s-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+      <i class="bi bi-grid-1x2"></i><span>Dashboard</span>
+    </a>
+    <a href="/items" class="s-link {% if request.endpoint in ('items','item_detail','new_item','edit_item') %}active{% endif %}">
+      <i class="bi bi-box-seam"></i><span>Inventory</span>
+    </a>
+    <a href="/kits" class="s-link {% if request.endpoint in ('kits','kit_detail','new_kit','edit_kit') %}active{% endif %}">
+      <i class="bi bi-collection"></i><span>Kits</span>
+    </a>
+    <a href="/transactions" class="s-link {% if request.endpoint == 'transactions' %}active{% endif %}">
+      <i class="bi bi-arrow-left-right"></i><span>Transactions</span>
+    </a>
+
+    <hr class="sidebar-divider">
+    <div class="sidebar-group-label">Settings</div>
+    <a href="/categories" class="s-link {% if request.endpoint == 'categories' %}active{% endif %}">
+      <i class="bi bi-tags"></i><span>Categories</span>
+    </a>
+    <a href="/locations" class="s-link {% if request.endpoint == 'locations' %}active{% endif %}">
+      <i class="bi bi-geo-alt"></i><span>Locations</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <a href="/items/new" class="sidebar-cta">
+      <i class="bi bi-plus-lg"></i><span>Add Item</span>
+    </a>
+  </div>
+</aside>
+
+<div class="main-wrap">
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
+    <div class="flash-zone">
       {% for cat, msg in messages %}
-        <div class="alert alert-{{ 'success' if cat == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
-          <i class="bi bi-{% if cat == 'success' %}check-circle{% else %}exclamation-triangle{% endif %} me-2"></i>
-          {{ msg }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+      <div class="flash-msg flash-{{ cat }}">
+        <i class="bi bi-{% if cat == 'success' %}check-circle-fill{% else %}exclamation-circle-fill{% endif %}"></i>
+        {{ msg }}
+      </div>
       {% endfor %}
+    </div>
     {% endif %}
   {% endwith %}
-</div>
 
-<!-- Page content -->
-<div class="container-fluid px-4 pb-5">
-  {% block content %}{% endblock %}
+  <div class="page">
+    {% block content %}{% endblock %}
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
