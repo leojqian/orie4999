@@ -8,7 +8,7 @@ Run:
 Developed by:  
 - Leo Qian, Cornell University
 - Jason Kim, Cornell University
-- Alden Ritz-Jack, Cornell University
+- Alden Ritz-Jack, Cornell University  
 Advisors:
 - Dr. Jessica Rush Leeker, Cornell University
 - Eric Leeker, Corning
