@@ -1,7 +1,7 @@
 # Cornell x Corning Laboratory Inventory Management System  
 
 ## Usage
-cd into the directory containing thise code.  
+cd into the directory containing this code.  
 Run:  
 ```pip install -r requirements.txt```  
 ```python app.py```  
